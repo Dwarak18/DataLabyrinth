@@ -30,7 +30,7 @@ router.post('/login', async (req, res) => {
       const { dataset_json, correct_hash } = generateDataset(team.id, 1);
       await query(
         'INSERT INTO challenge_data (team_id, level, dataset_json, correct_hash) VALUES ($1, $2, $3, $4)',
-        [team.id, 1, dataset_json, correct_hash]
+        [team.id, 1, JSON.stringify(dataset_json), correct_hash]
       );
     }
 
@@ -45,6 +45,7 @@ router.post('/login', async (req, res) => {
     return res.json({
       token,
       team: {
+        id: team.id,
         name: team.name,
         current_level: team.current_level,
         score: team.score,

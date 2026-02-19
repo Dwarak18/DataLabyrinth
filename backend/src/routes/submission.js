@@ -1,12 +1,54 @@
 const express = require('express');
 const { getRedis } = require('../redis');
 const { query } = require('../db');
-const { validateSubmission } = require('../services/challengeEngine');
+const { validateSubmission, generateDataset } = require('../services/challengeEngine');
 const { calculateScore } = require('../services/scoringService');
 const { verifyJWT } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 const redis = getRedis();
+
+// GET /challenge/:level — return dataset for the team's current level
+router.get('/challenge/:level', verifyJWT, async (req, res) => {
+  const level = Number(req.params.level);
+  if (!level || isNaN(level)) {
+    return res.status(400).json({ error: 'Invalid level' });
+  }
+  try {
+    const { rows } = await query(
+      'SELECT id, current_level FROM teams WHERE id = $1 LIMIT 1',
+      [req.team.teamId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Team not found' });
+    if (rows[0].current_level !== level) {
+      return res.status(400).json({ error: 'Level mismatch' });
+    }
+
+    // Check if challenge already generated
+    const existing = await query(
+      'SELECT dataset_json FROM challenge_data WHERE team_id = $1 AND level = $2 LIMIT 1',
+      [req.team.teamId, level]
+    );
+
+    let dataset;
+    if (existing.rows.length) {
+      dataset = existing.rows[0].dataset_json;
+    } else {
+      // Generate and persist
+      const generated = generateDataset(req.team.teamId, level);
+      await query(
+        'INSERT INTO challenge_data (team_id, level, dataset_json, correct_hash) VALUES ($1, $2, $3, $4)',
+        [req.team.teamId, level, JSON.stringify(generated.dataset_json), generated.correct_hash]
+      );
+      dataset = generated.dataset_json;
+    }
+
+    return res.json({ level, dataset });
+  } catch (err) {
+    console.error('challenge fetch error', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
 
 async function getAttempts(teamId, level) {
   const existing = await query(

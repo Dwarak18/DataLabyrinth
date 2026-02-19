@@ -54,6 +54,21 @@ export async function adminEliminate(teamId: string, adminSecret: string) {
   });
 }
 
+export async function getChallenge(token: string, level: number) {
+  const res = await fetch(`${API_BASE}/challenge/${level}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || 'Failed to load challenge');
+  }
+  return res.json();
+}
+
 export async function adminExport(adminSecret: string) {
   const res = await fetch(`${API_BASE}/admin/export`, {
     headers: { 'x-admin-secret': adminSecret },

@@ -1,9 +1,11 @@
 "use client";
 
 import { FormEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { login } from '../../lib/api';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [accessCode, setAccessCode] = useState('');
   const [status, setStatus] = useState<string | null>(null);
 
@@ -14,7 +16,7 @@ export default function LoginPage() {
       const res = await login(accessCode.trim());
       localStorage.setItem('datalabyrinth_token', res.token);
       localStorage.setItem('datalabyrinth_team', JSON.stringify(res.team));
-      setStatus('Success! Go to dashboard.');
+      router.push('/dashboard');
     } catch (err: any) {
       setStatus(err?.message || 'Login failed');
     }
