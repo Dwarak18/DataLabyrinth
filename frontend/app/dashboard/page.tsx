@@ -17,7 +17,7 @@ export default function DashboardPage() {
     const token = localStorage.getItem('datalabyrinth_token');
     const teamData = JSON.parse(stored);
     if (token && teamData?.id) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/status/${teamData.id}`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/status/${teamData.id}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       })
@@ -31,6 +31,9 @@ export default function DashboardPage() {
         .catch(() => {});
     }
   }, [router]);
+
+  return (
+    <main className="max-w-2xl mx-auto p-6 space-y-4">
       <h1 className="text-3xl font-bold">Dashboard</h1>
       <Timer />
       {team && (
