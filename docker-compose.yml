@@ -1,0 +1,59 @@
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: data-labyrinth-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: heisenberg
+      POSTGRES_DB: blacksite
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./railway/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d blacksite"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Next.js frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    container_name: data-labyrinth-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://backend:4000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Express backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: data-labyrinth-backend
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:heisenberg@postgres:5432/blacksite
+      ADMIN_SECRET: heisenberg
+      FRONTEND_URL: http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg_data:

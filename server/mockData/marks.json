@@ -1,0 +1,722 @@
+[
+  {
+    "id": 1,
+    "student_id": 1,
+    "subject": "DBMS",
+    "marks": 47
+  },
+  {
+    "id": 2,
+    "student_id": 1,
+    "subject": "OS",
+    "marks": 60
+  },
+  {
+    "id": 3,
+    "student_id": 1,
+    "subject": "Networks",
+    "marks": 73
+  },
+  {
+    "id": 4,
+    "student_id": 1,
+    "subject": "DSA",
+    "marks": 86
+  },
+  {
+    "id": 5,
+    "student_id": 2,
+    "subject": "DBMS",
+    "marks": 54
+  },
+  {
+    "id": 6,
+    "student_id": 2,
+    "subject": "OS",
+    "marks": 67
+  },
+  {
+    "id": 7,
+    "student_id": 2,
+    "subject": "Networks",
+    "marks": 80
+  },
+  {
+    "id": 8,
+    "student_id": 2,
+    "subject": "DSA",
+    "marks": 93
+  },
+  {
+    "id": 9,
+    "student_id": 3,
+    "subject": "DBMS",
+    "marks": 61
+  },
+  {
+    "id": 10,
+    "student_id": 3,
+    "subject": "OS",
+    "marks": 74
+  },
+  {
+    "id": 11,
+    "student_id": 3,
+    "subject": "Networks",
+    "marks": 87
+  },
+  {
+    "id": 12,
+    "student_id": 3,
+    "subject": "DSA",
+    "marks": 100
+  },
+  {
+    "id": 13,
+    "student_id": 4,
+    "subject": "DBMS",
+    "marks": 68
+  },
+  {
+    "id": 14,
+    "student_id": 4,
+    "subject": "OS",
+    "marks": 81
+  },
+  {
+    "id": 15,
+    "student_id": 4,
+    "subject": "Networks",
+    "marks": 94
+  },
+  {
+    "id": 16,
+    "student_id": 4,
+    "subject": "DSA",
+    "marks": null
+  },
+  {
+    "id": 17,
+    "student_id": 5,
+    "subject": "DBMS",
+    "marks": 75
+  },
+  {
+    "id": 18,
+    "student_id": 5,
+    "subject": "OS",
+    "marks": 88
+  },
+  {
+    "id": 19,
+    "student_id": 5,
+    "subject": "Networks",
+    "marks": 40
+  },
+  {
+    "id": 20,
+    "student_id": 5,
+    "subject": "DSA",
+    "marks": 53
+  },
+  {
+    "id": 21,
+    "student_id": 6,
+    "subject": "DBMS",
+    "marks": 82
+  },
+  {
+    "id": 22,
+    "student_id": 6,
+    "subject": "OS",
+    "marks": 95
+  },
+  {
+    "id": 23,
+    "student_id": 6,
+    "subject": "Networks",
+    "marks": 47
+  },
+  {
+    "id": 24,
+    "student_id": 6,
+    "subject": "DSA",
+    "marks": 60
+  },
+  {
+    "id": 25,
+    "student_id": 7,
+    "subject": "DBMS",
+    "marks": 89
+  },
+  {
+    "id": 26,
+    "student_id": 7,
+    "subject": "OS",
+    "marks": 41
+  },
+  {
+    "id": 27,
+    "student_id": 7,
+    "subject": "Networks",
+    "marks": 54
+  },
+  {
+    "id": 28,
+    "student_id": 7,
+    "subject": "DSA",
+    "marks": 67
+  },
+  {
+    "id": 29,
+    "student_id": 8,
+    "subject": "DBMS",
+    "marks": 96
+  },
+  {
+    "id": 30,
+    "student_id": 8,
+    "subject": "OS",
+    "marks": 48
+  },
+  {
+    "id": 31,
+    "student_id": 8,
+    "subject": "Networks",
+    "marks": 61
+  },
+  {
+    "id": 32,
+    "student_id": 8,
+    "subject": "DSA",
+    "marks": 74
+  },
+  {
+    "id": 33,
+    "student_id": 9,
+    "subject": "DBMS",
+    "marks": 42
+  },
+  {
+    "id": 34,
+    "student_id": 9,
+    "subject": "OS",
+    "marks": 55
+  },
+  {
+    "id": 35,
+    "student_id": 9,
+    "subject": "Networks",
+    "marks": 68
+  },
+  {
+    "id": 36,
+    "student_id": 9,
+    "subject": "DSA",
+    "marks": 81
+  },
+  {
+    "id": 37,
+    "student_id": 10,
+    "subject": "DBMS",
+    "marks": 49
+  },
+  {
+    "id": 38,
+    "student_id": 10,
+    "subject": "OS",
+    "marks": 62
+  },
+  {
+    "id": 39,
+    "student_id": 10,
+    "subject": "Networks",
+    "marks": 75
+  },
+  {
+    "id": 40,
+    "student_id": 10,
+    "subject": "DSA",
+    "marks": 88
+  },
+  {
+    "id": 41,
+    "student_id": 11,
+    "subject": "DBMS",
+    "marks": 56
+  },
+  {
+    "id": 42,
+    "student_id": 11,
+    "subject": "OS",
+    "marks": 69
+  },
+  {
+    "id": 43,
+    "student_id": 11,
+    "subject": "Networks",
+    "marks": null
+  },
+  {
+    "id": 44,
+    "student_id": 11,
+    "subject": "DSA",
+    "marks": 95
+  },
+  {
+    "id": 45,
+    "student_id": 12,
+    "subject": "DBMS",
+    "marks": 63
+  },
+  {
+    "id": 46,
+    "student_id": 12,
+    "subject": "OS",
+    "marks": 76
+  },
+  {
+    "id": 47,
+    "student_id": 12,
+    "subject": "Networks",
+    "marks": 89
+  },
+  {
+    "id": 48,
+    "student_id": 12,
+    "subject": "DSA",
+    "marks": 41
+  },
+  {
+    "id": 49,
+    "student_id": 13,
+    "subject": "DBMS",
+    "marks": 70
+  },
+  {
+    "id": 50,
+    "student_id": 13,
+    "subject": "OS",
+    "marks": 83
+  },
+  {
+    "id": 51,
+    "student_id": 13,
+    "subject": "Networks",
+    "marks": 96
+  },
+  {
+    "id": 52,
+    "student_id": 13,
+    "subject": "DSA",
+    "marks": 48
+  },
+  {
+    "id": 53,
+    "student_id": 14,
+    "subject": "DBMS",
+    "marks": 77
+  },
+  {
+    "id": 54,
+    "student_id": 14,
+    "subject": "OS",
+    "marks": 90
+  },
+  {
+    "id": 55,
+    "student_id": 14,
+    "subject": "Networks",
+    "marks": 42
+  },
+  {
+    "id": 56,
+    "student_id": 14,
+    "subject": "DSA",
+    "marks": 55
+  },
+  {
+    "id": 57,
+    "student_id": 15,
+    "subject": "DBMS",
+    "marks": 84
+  },
+  {
+    "id": 58,
+    "student_id": 15,
+    "subject": "OS",
+    "marks": 97
+  },
+  {
+    "id": 59,
+    "student_id": 15,
+    "subject": "Networks",
+    "marks": 49
+  },
+  {
+    "id": 60,
+    "student_id": 15,
+    "subject": "DSA",
+    "marks": 62
+  },
+  {
+    "id": 61,
+    "student_id": 16,
+    "subject": "DBMS",
+    "marks": 91
+  },
+  {
+    "id": 62,
+    "student_id": 16,
+    "subject": "OS",
+    "marks": 43
+  },
+  {
+    "id": 63,
+    "student_id": 16,
+    "subject": "Networks",
+    "marks": 56
+  },
+  {
+    "id": 64,
+    "student_id": 16,
+    "subject": "DSA",
+    "marks": 69
+  },
+  {
+    "id": 65,
+    "student_id": 17,
+    "subject": "DBMS",
+    "marks": 98
+  },
+  {
+    "id": 66,
+    "student_id": 17,
+    "subject": "OS",
+    "marks": 50
+  },
+  {
+    "id": 67,
+    "student_id": 17,
+    "subject": "Networks",
+    "marks": 63
+  },
+  {
+    "id": 68,
+    "student_id": 17,
+    "subject": "DSA",
+    "marks": 76
+  },
+  {
+    "id": 69,
+    "student_id": 18,
+    "subject": "DBMS",
+    "marks": 44
+  },
+  {
+    "id": 70,
+    "student_id": 18,
+    "subject": "OS",
+    "marks": 57
+  },
+  {
+    "id": 71,
+    "student_id": 18,
+    "subject": "Networks",
+    "marks": 70
+  },
+  {
+    "id": 72,
+    "student_id": 18,
+    "subject": "DSA",
+    "marks": 83
+  },
+  {
+    "id": 73,
+    "student_id": 19,
+    "subject": "DBMS",
+    "marks": 51
+  },
+  {
+    "id": 74,
+    "student_id": 19,
+    "subject": "OS",
+    "marks": 64
+  },
+  {
+    "id": 75,
+    "student_id": 19,
+    "subject": "Networks",
+    "marks": 77
+  },
+  {
+    "id": 76,
+    "student_id": 19,
+    "subject": "DSA",
+    "marks": 90
+  },
+  {
+    "id": 77,
+    "student_id": 20,
+    "subject": "DBMS",
+    "marks": 58
+  },
+  {
+    "id": 78,
+    "student_id": 20,
+    "subject": "OS",
+    "marks": 71
+  },
+  {
+    "id": 79,
+    "student_id": 20,
+    "subject": "Networks",
+    "marks": null
+  },
+  {
+    "id": 80,
+    "student_id": 20,
+    "subject": "DSA",
+    "marks": 97
+  },
+  {
+    "id": 81,
+    "student_id": 21,
+    "subject": "DBMS",
+    "marks": 65
+  },
+  {
+    "id": 82,
+    "student_id": 21,
+    "subject": "OS",
+    "marks": 78
+  },
+  {
+    "id": 83,
+    "student_id": 21,
+    "subject": "Networks",
+    "marks": 91
+  },
+  {
+    "id": 84,
+    "student_id": 21,
+    "subject": "DSA",
+    "marks": 43
+  },
+  {
+    "id": 85,
+    "student_id": 22,
+    "subject": "DBMS",
+    "marks": 72
+  },
+  {
+    "id": 86,
+    "student_id": 22,
+    "subject": "OS",
+    "marks": 85
+  },
+  {
+    "id": 87,
+    "student_id": 22,
+    "subject": "Networks",
+    "marks": 98
+  },
+  {
+    "id": 88,
+    "student_id": 22,
+    "subject": "DSA",
+    "marks": 50
+  },
+  {
+    "id": 89,
+    "student_id": 23,
+    "subject": "DBMS",
+    "marks": 79
+  },
+  {
+    "id": 90,
+    "student_id": 23,
+    "subject": "OS",
+    "marks": 92
+  },
+  {
+    "id": 91,
+    "student_id": 23,
+    "subject": "Networks",
+    "marks": 44
+  },
+  {
+    "id": 92,
+    "student_id": 23,
+    "subject": "DSA",
+    "marks": 57
+  },
+  {
+    "id": 93,
+    "student_id": 24,
+    "subject": "DBMS",
+    "marks": 86
+  },
+  {
+    "id": 94,
+    "student_id": 24,
+    "subject": "OS",
+    "marks": 99
+  },
+  {
+    "id": 95,
+    "student_id": 24,
+    "subject": "Networks",
+    "marks": 51
+  },
+  {
+    "id": 96,
+    "student_id": 24,
+    "subject": "DSA",
+    "marks": 64
+  },
+  {
+    "id": 97,
+    "student_id": 25,
+    "subject": "DBMS",
+    "marks": 93
+  },
+  {
+    "id": 98,
+    "student_id": 25,
+    "subject": "OS",
+    "marks": 45
+  },
+  {
+    "id": 99,
+    "student_id": 25,
+    "subject": "Networks",
+    "marks": 58
+  },
+  {
+    "id": 100,
+    "student_id": 25,
+    "subject": "DSA",
+    "marks": 71
+  },
+  {
+    "id": 101,
+    "student_id": 26,
+    "subject": "DBMS",
+    "marks": 100
+  },
+  {
+    "id": 102,
+    "student_id": 26,
+    "subject": "OS",
+    "marks": 52
+  },
+  {
+    "id": 103,
+    "student_id": 26,
+    "subject": "Networks",
+    "marks": 65
+  },
+  {
+    "id": 104,
+    "student_id": 26,
+    "subject": "DSA",
+    "marks": null
+  },
+  {
+    "id": 105,
+    "student_id": 27,
+    "subject": "DBMS",
+    "marks": 46
+  },
+  {
+    "id": 106,
+    "student_id": 27,
+    "subject": "OS",
+    "marks": 59
+  },
+  {
+    "id": 107,
+    "student_id": 27,
+    "subject": "Networks",
+    "marks": 72
+  },
+  {
+    "id": 108,
+    "student_id": 27,
+    "subject": "DSA",
+    "marks": 85
+  },
+  {
+    "id": 109,
+    "student_id": 28,
+    "subject": "DBMS",
+    "marks": 53
+  },
+  {
+    "id": 110,
+    "student_id": 28,
+    "subject": "OS",
+    "marks": 66
+  },
+  {
+    "id": 111,
+    "student_id": 28,
+    "subject": "Networks",
+    "marks": 79
+  },
+  {
+    "id": 112,
+    "student_id": 28,
+    "subject": "DSA",
+    "marks": 92
+  },
+  {
+    "id": 113,
+    "student_id": 29,
+    "subject": "DBMS",
+    "marks": 60
+  },
+  {
+    "id": 114,
+    "student_id": 29,
+    "subject": "OS",
+    "marks": 73
+  },
+  {
+    "id": 115,
+    "student_id": 29,
+    "subject": "Networks",
+    "marks": 86
+  },
+  {
+    "id": 116,
+    "student_id": 29,
+    "subject": "DSA",
+    "marks": 99
+  },
+  {
+    "id": 117,
+    "student_id": 30,
+    "subject": "DBMS",
+    "marks": 67
+  },
+  {
+    "id": 118,
+    "student_id": 30,
+    "subject": "OS",
+    "marks": 80
+  },
+  {
+    "id": 119,
+    "student_id": 30,
+    "subject": "Networks",
+    "marks": 93
+  },
+  {
+    "id": 120,
+    "student_id": 30,
+    "subject": "DSA",
+    "marks": 45
+  }
+]

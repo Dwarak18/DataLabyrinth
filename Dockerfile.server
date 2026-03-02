@@ -1,0 +1,17 @@
+FROM node:20-alpine
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat
+
+# Only copy what the Express server needs
+COPY package.json package-lock.json ./
+RUN npm install --only=production --legacy-peer-deps
+
+COPY server/ ./server/
+
+ENV NODE_ENV=production
+ENV PORT=4000
+
+EXPOSE 4000
+
+CMD ["node", "server/index.js"]

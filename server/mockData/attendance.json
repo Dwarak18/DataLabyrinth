@@ -1,0 +1,632 @@
+[
+  {
+    "id": 1,
+    "student_id": 1,
+    "subject": "DBMS",
+    "attended": 41,
+    "total": 60
+  },
+  {
+    "id": 2,
+    "student_id": 1,
+    "subject": "OS",
+    "attended": 48,
+    "total": 60
+  },
+  {
+    "id": 3,
+    "student_id": 1,
+    "subject": "Networks",
+    "attended": 55,
+    "total": 60
+  },
+  {
+    "id": 4,
+    "student_id": 2,
+    "subject": "DBMS",
+    "attended": 52,
+    "total": 60
+  },
+  {
+    "id": 5,
+    "student_id": 2,
+    "subject": "OS",
+    "attended": 59,
+    "total": 60
+  },
+  {
+    "id": 6,
+    "student_id": 2,
+    "subject": "Networks",
+    "attended": 31,
+    "total": 60
+  },
+  {
+    "id": 7,
+    "student_id": 3,
+    "subject": "DBMS",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 8,
+    "student_id": 3,
+    "subject": "OS",
+    "attended": 35,
+    "total": 60
+  },
+  {
+    "id": 9,
+    "student_id": 3,
+    "subject": "Networks",
+    "attended": 42,
+    "total": 60
+  },
+  {
+    "id": 10,
+    "student_id": 4,
+    "subject": "DBMS",
+    "attended": 39,
+    "total": 60
+  },
+  {
+    "id": 11,
+    "student_id": 4,
+    "subject": "OS",
+    "attended": 46,
+    "total": 60
+  },
+  {
+    "id": 12,
+    "student_id": 4,
+    "subject": "Networks",
+    "attended": 53,
+    "total": 60
+  },
+  {
+    "id": 13,
+    "student_id": 5,
+    "subject": "DBMS",
+    "attended": 50,
+    "total": 60
+  },
+  {
+    "id": 14,
+    "student_id": 5,
+    "subject": "OS",
+    "attended": 57,
+    "total": 60
+  },
+  {
+    "id": 15,
+    "student_id": 5,
+    "subject": "Networks",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 16,
+    "student_id": 6,
+    "subject": "DBMS",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 17,
+    "student_id": 6,
+    "subject": "OS",
+    "attended": 33,
+    "total": 60
+  },
+  {
+    "id": 18,
+    "student_id": 6,
+    "subject": "Networks",
+    "attended": 40,
+    "total": 60
+  },
+  {
+    "id": 19,
+    "student_id": 7,
+    "subject": "DBMS",
+    "attended": 37,
+    "total": 60
+  },
+  {
+    "id": 20,
+    "student_id": 7,
+    "subject": "OS",
+    "attended": 44,
+    "total": 60
+  },
+  {
+    "id": 21,
+    "student_id": 7,
+    "subject": "Networks",
+    "attended": 51,
+    "total": 60
+  },
+  {
+    "id": 22,
+    "student_id": 8,
+    "subject": "DBMS",
+    "attended": 48,
+    "total": 60
+  },
+  {
+    "id": 23,
+    "student_id": 8,
+    "subject": "OS",
+    "attended": 55,
+    "total": 60
+  },
+  {
+    "id": 24,
+    "student_id": 8,
+    "subject": "Networks",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 25,
+    "student_id": 9,
+    "subject": "DBMS",
+    "attended": 59,
+    "total": 60
+  },
+  {
+    "id": 26,
+    "student_id": 9,
+    "subject": "OS",
+    "attended": 31,
+    "total": 60
+  },
+  {
+    "id": 27,
+    "student_id": 9,
+    "subject": "Networks",
+    "attended": 38,
+    "total": 60
+  },
+  {
+    "id": 28,
+    "student_id": 10,
+    "subject": "DBMS",
+    "attended": 35,
+    "total": 60
+  },
+  {
+    "id": 29,
+    "student_id": 10,
+    "subject": "OS",
+    "attended": 42,
+    "total": 60
+  },
+  {
+    "id": 30,
+    "student_id": 10,
+    "subject": "Networks",
+    "attended": 49,
+    "total": 60
+  },
+  {
+    "id": 31,
+    "student_id": 11,
+    "subject": "DBMS",
+    "attended": 46,
+    "total": 60
+  },
+  {
+    "id": 32,
+    "student_id": 11,
+    "subject": "OS",
+    "attended": 53,
+    "total": 60
+  },
+  {
+    "id": 33,
+    "student_id": 11,
+    "subject": "Networks",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 34,
+    "student_id": 12,
+    "subject": "DBMS",
+    "attended": 57,
+    "total": 60
+  },
+  {
+    "id": 35,
+    "student_id": 12,
+    "subject": "OS",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 36,
+    "student_id": 12,
+    "subject": "Networks",
+    "attended": 36,
+    "total": 60
+  },
+  {
+    "id": 37,
+    "student_id": 13,
+    "subject": "DBMS",
+    "attended": 33,
+    "total": 60
+  },
+  {
+    "id": 38,
+    "student_id": 13,
+    "subject": "OS",
+    "attended": 40,
+    "total": 60
+  },
+  {
+    "id": 39,
+    "student_id": 13,
+    "subject": "Networks",
+    "attended": 47,
+    "total": 60
+  },
+  {
+    "id": 40,
+    "student_id": 14,
+    "subject": "DBMS",
+    "attended": 44,
+    "total": 60
+  },
+  {
+    "id": 41,
+    "student_id": 14,
+    "subject": "OS",
+    "attended": 51,
+    "total": 60
+  },
+  {
+    "id": 42,
+    "student_id": 14,
+    "subject": "Networks",
+    "attended": 58,
+    "total": 60
+  },
+  {
+    "id": 43,
+    "student_id": 15,
+    "subject": "DBMS",
+    "attended": 55,
+    "total": 60
+  },
+  {
+    "id": 44,
+    "student_id": 15,
+    "subject": "OS",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 45,
+    "student_id": 15,
+    "subject": "Networks",
+    "attended": 34,
+    "total": 60
+  },
+  {
+    "id": 46,
+    "student_id": 16,
+    "subject": "DBMS",
+    "attended": 31,
+    "total": 60
+  },
+  {
+    "id": 47,
+    "student_id": 16,
+    "subject": "OS",
+    "attended": 38,
+    "total": 60
+  },
+  {
+    "id": 48,
+    "student_id": 16,
+    "subject": "Networks",
+    "attended": 45,
+    "total": 60
+  },
+  {
+    "id": 49,
+    "student_id": 17,
+    "subject": "DBMS",
+    "attended": 42,
+    "total": 60
+  },
+  {
+    "id": 50,
+    "student_id": 17,
+    "subject": "OS",
+    "attended": 49,
+    "total": 60
+  },
+  {
+    "id": 51,
+    "student_id": 17,
+    "subject": "Networks",
+    "attended": 56,
+    "total": 60
+  },
+  {
+    "id": 52,
+    "student_id": 18,
+    "subject": "DBMS",
+    "attended": 53,
+    "total": 60
+  },
+  {
+    "id": 53,
+    "student_id": 18,
+    "subject": "OS",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 54,
+    "student_id": 18,
+    "subject": "Networks",
+    "attended": 32,
+    "total": 60
+  },
+  {
+    "id": 55,
+    "student_id": 19,
+    "subject": "DBMS",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 56,
+    "student_id": 19,
+    "subject": "OS",
+    "attended": 36,
+    "total": 60
+  },
+  {
+    "id": 57,
+    "student_id": 19,
+    "subject": "Networks",
+    "attended": 43,
+    "total": 60
+  },
+  {
+    "id": 58,
+    "student_id": 20,
+    "subject": "DBMS",
+    "attended": 40,
+    "total": 60
+  },
+  {
+    "id": 59,
+    "student_id": 20,
+    "subject": "OS",
+    "attended": 47,
+    "total": 60
+  },
+  {
+    "id": 60,
+    "student_id": 20,
+    "subject": "Networks",
+    "attended": 54,
+    "total": 60
+  },
+  {
+    "id": 61,
+    "student_id": 21,
+    "subject": "DBMS",
+    "attended": 51,
+    "total": 60
+  },
+  {
+    "id": 62,
+    "student_id": 21,
+    "subject": "OS",
+    "attended": 58,
+    "total": 60
+  },
+  {
+    "id": 63,
+    "student_id": 21,
+    "subject": "Networks",
+    "attended": 30,
+    "total": 60
+  },
+  {
+    "id": 64,
+    "student_id": 22,
+    "subject": "DBMS",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 65,
+    "student_id": 22,
+    "subject": "OS",
+    "attended": 34,
+    "total": 60
+  },
+  {
+    "id": 66,
+    "student_id": 22,
+    "subject": "Networks",
+    "attended": 41,
+    "total": 60
+  },
+  {
+    "id": 67,
+    "student_id": 23,
+    "subject": "DBMS",
+    "attended": 38,
+    "total": 60
+  },
+  {
+    "id": 68,
+    "student_id": 23,
+    "subject": "OS",
+    "attended": 45,
+    "total": 60
+  },
+  {
+    "id": 69,
+    "student_id": 23,
+    "subject": "Networks",
+    "attended": 52,
+    "total": 60
+  },
+  {
+    "id": 70,
+    "student_id": 24,
+    "subject": "DBMS",
+    "attended": 49,
+    "total": 60
+  },
+  {
+    "id": 71,
+    "student_id": 24,
+    "subject": "OS",
+    "attended": 56,
+    "total": 60
+  },
+  {
+    "id": 72,
+    "student_id": 24,
+    "subject": "Networks",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 73,
+    "student_id": 25,
+    "subject": "DBMS",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 74,
+    "student_id": 25,
+    "subject": "OS",
+    "attended": 32,
+    "total": 60
+  },
+  {
+    "id": 75,
+    "student_id": 25,
+    "subject": "Networks",
+    "attended": 39,
+    "total": 60
+  },
+  {
+    "id": 76,
+    "student_id": 26,
+    "subject": "DBMS",
+    "attended": 36,
+    "total": 60
+  },
+  {
+    "id": 77,
+    "student_id": 26,
+    "subject": "OS",
+    "attended": 43,
+    "total": 60
+  },
+  {
+    "id": 78,
+    "student_id": 26,
+    "subject": "Networks",
+    "attended": 50,
+    "total": 60
+  },
+  {
+    "id": 79,
+    "student_id": 27,
+    "subject": "DBMS",
+    "attended": 47,
+    "total": 60
+  },
+  {
+    "id": 80,
+    "student_id": 27,
+    "subject": "OS",
+    "attended": 54,
+    "total": 60
+  },
+  {
+    "id": 81,
+    "student_id": 27,
+    "subject": "Networks",
+    "attended": 60,
+    "total": 60
+  },
+  {
+    "id": 82,
+    "student_id": 28,
+    "subject": "DBMS",
+    "attended": 58,
+    "total": 60
+  },
+  {
+    "id": 83,
+    "student_id": 28,
+    "subject": "OS",
+    "attended": 30,
+    "total": 60
+  },
+  {
+    "id": 84,
+    "student_id": 28,
+    "subject": "Networks",
+    "attended": 37,
+    "total": 60
+  },
+  {
+    "id": 85,
+    "student_id": 29,
+    "subject": "DBMS",
+    "attended": 34,
+    "total": 60
+  },
+  {
+    "id": 86,
+    "student_id": 29,
+    "subject": "OS",
+    "attended": 41,
+    "total": 60
+  },
+  {
+    "id": 87,
+    "student_id": 29,
+    "subject": "Networks",
+    "attended": 48,
+    "total": 60
+  },
+  {
+    "id": 88,
+    "student_id": 30,
+    "subject": "DBMS",
+    "attended": 45,
+    "total": 60
+  },
+  {
+    "id": 89,
+    "student_id": 30,
+    "subject": "OS",
+    "attended": 52,
+    "total": 60
+  },
+  {
+    "id": 90,
+    "student_id": 30,
+    "subject": "Networks",
+    "attended": 59,
+    "total": 60
+  }
+]
