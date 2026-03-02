@@ -19,6 +19,9 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Overwrite .env.production so the build arg always wins over any committed .env file
+RUN echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.production
+
 RUN npm run build
 
 # ── Stage 3: runner ───────────────────────────────────────────────────────────

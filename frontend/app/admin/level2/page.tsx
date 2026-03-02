@@ -1,6 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import * as XLSX from 'xlsx';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -92,7 +93,7 @@ function LoginScreen({ onAuth }: { onAuth: (tok: string) => void }) {
         </div>
         <label style={{ display: 'block', color: C.sub, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Username</label>
         <input type="text" value={u} onChange={e => setU(e.target.value)} onKeyDown={e => e.key === 'Enter' && login()}
-          placeholder="heisenberg" autoComplete="username" style={{ ...iStyle, marginBottom: 14 }} />
+          placeholder="Username" autoComplete="username" style={{ ...iStyle, marginBottom: 14 }} />
         <label style={{ display: 'block', color: C.sub, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Password</label>
         <input type="password" value={p} onChange={e => setP(e.target.value)} onKeyDown={e => e.key === 'Enter' && login()}
           placeholder="••••••••" autoComplete="current-password" style={{ ...iStyle, marginBottom: 14 }} />
@@ -109,15 +110,6 @@ function LoginScreen({ onAuth }: { onAuth: (tok: string) => void }) {
         }}>
           AUTHENTICATE →
         </button>
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${C.muted}` }}>
-          <p style={{ color: C.muted, fontSize: 9, letterSpacing: '0.15em', marginBottom: 8, textTransform: 'uppercase' }}>Default credentials</p>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
-            <span style={{ color: C.dim }}>Username</span><span style={{ color: C.green }}>heisenberg</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-            <span style={{ color: C.dim }}>Password</span><span style={{ color: C.green }}>heisenberg</span>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -144,6 +136,56 @@ export default function AdminPanel() {
   // Teams tab
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamCode, setNewTeamCode] = useState('');
+
+  // Excel import
+  const [importRows, setImportRows] = useState<{ team_id: string; team_name: string; password: string }[]>([]);
+  const [importStatus, setImportStatus] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json: any[] = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        // Normalise column names: trim & lowercase
+        const rows = json.map((r) => {
+          const norm: Record<string, string> = {};
+          for (const k of Object.keys(r)) norm[k.trim().toLowerCase().replace(/\s+/g, '_')] = String(r[k]).trim();
+          return {
+            team_id:   norm['team_id']   || norm['id']       || '',
+            team_name: norm['team_name'] || norm['name']     || '',
+            password:  norm['password']  || norm['code']     || norm['access_code'] || '',
+          };
+        }).filter(r => r.team_name && r.password);
+        setImportRows(rows);
+        setImportStatus(`✅ Parsed ${rows.length} row(s) from "${file.name}". Review below and confirm.`);
+      } catch {
+        setImportStatus('⛔ Failed to parse file. Ensure it is a valid .xlsx or .xls file.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = '';
+  };
+
+  const handleImportConfirm = async () => {
+    if (!importRows.length) return;
+    try {
+      const d = await api('/api/admin/teams/import', {
+        method: 'POST',
+        body: JSON.stringify({ teams: importRows }),
+      });
+      setImportStatus(`✅ Import complete — ${d.inserted} added, ${d.updated ?? 0} updated, ${d.skipped} skipped.`);
+      setImportRows([]);
+      loadAll();
+    } catch (e: any) {
+      setImportStatus(`⛔ Import failed: ${e.message}`);
+    }
+  };
 
   // Submissions tab
   const [subFilter, setSubFilter] = useState('');
@@ -401,7 +443,7 @@ export default function AdminPanel() {
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <input value={newTeamName} onChange={e => setNewTeamName(e.target.value)} placeholder="Team Name (e.g. Alpha Squad)"
                   style={{ ...inp, flex: 2, minWidth: 160 }} />
-                <input value={newTeamCode} onChange={e => setNewTeamCode(e.target.value.toUpperCase())} placeholder="Code (e.g. ALPHA-1)"
+                <input value={newTeamCode} onChange={e => setNewTeamCode(e.target.value.toUpperCase())} placeholder="Code / Password (e.g. ALPHA-1)"
                   style={{ ...inp, flex: 1, minWidth: 120 }} />
                 <button onClick={async () => {
                   if (!newTeamName || !newTeamCode) { flash('Name and code required', 'err'); return; }
@@ -411,12 +453,93 @@ export default function AdminPanel() {
               </div>
             </div>
 
+            {/* Excel Import */}
+            <div style={{ ...card, padding: 16, marginBottom: 16 }}>
+              <p style={{ color: C.sub, fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', margin: '0 0 10px' }}>
+                📤 Import Teams from Excel
+              </p>
+              <p style={{ color: C.dim, fontSize: 10, margin: '0 0 12px' }}>
+                Excel file must contain columns: <span style={{ color: C.cyan }}>team_id</span>, <span style={{ color: C.cyan }}>team_name</span>, <span style={{ color: C.cyan }}>password</span>
+                {' '}(first row = headers). Teams already in DB will be updated.
+              </p>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={handleExcelFile}
+                  style={{ display: 'none' }}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ ...actionBtn(C.cyan), padding: '7px 14px', fontSize: 11 }}
+                >
+                  📁 CHOOSE EXCEL FILE
+                </button>
+                {importRows.length > 0 && (
+                  <button
+                    onClick={handleImportConfirm}
+                    style={{ ...actionBtn(C.green), padding: '7px 14px', fontSize: 11 }}
+                  >
+                    ✅ CONFIRM IMPORT ({importRows.length} teams)
+                  </button>
+                )}
+                {importRows.length > 0 && (
+                  <button
+                    onClick={() => { setImportRows([]); setImportStatus(''); }}
+                    style={{ ...actionBtn(C.red), padding: '7px 10px', fontSize: 11 }}
+                  >
+                    ✕ CLEAR
+                  </button>
+                )}
+              </div>
+
+              {importStatus && (
+                <div style={{
+                  margin: '10px 0 0',
+                  padding: '7px 10px',
+                  borderRadius: 2,
+                  fontSize: 11,
+                  background: importStatus.startsWith('⛔') ? C.red + '18' : C.green + '14',
+                  border: `1px solid ${importStatus.startsWith('⛔') ? C.red : C.green}44`,
+                  color: importStatus.startsWith('⛔') ? C.red : C.green,
+                }}>
+                  {importStatus}
+                </div>
+              )}
+
+              {/* Preview table */}
+              {importRows.length > 0 && (
+                <div style={{ marginTop: 12, maxHeight: 220, overflowY: 'auto', border: `1px solid ${C.border}`, borderRadius: 2 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: '#050a07', position: 'sticky', top: 0 }}>
+                        {['#', 'Team ID', 'Team Name', 'Password'].map(h => (
+                          <th key={h} style={{ padding: '6px 10px', textAlign: 'left', fontSize: 9, color: C.dim, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importRows.map((r, i) => (
+                        <tr key={i} style={{ borderTop: `1px solid ${C.muted}30` }}>
+                          <td style={{ padding: '6px 10px', color: C.muted, fontSize: 10 }}>{i + 1}</td>
+                          <td style={{ padding: '6px 10px', color: C.cyan, fontSize: 11 }}>{r.team_id || '—'}</td>
+                          <td style={{ padding: '6px 10px', color: C.text, fontSize: 11 }}>{r.team_name}</td>
+                          <td style={{ padding: '6px 10px' }}><Badge v={r.password} col={C.green} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
             {/* Table */}
             <div style={{ ...card, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: `1px solid ${C.border}`, background: '#050a07' }}>
-                    {['Team', 'Code', 'Status', 'Session End', 'Score', 'Tasks', 'Actions'].map(h => (
+                    {['Team', 'Code / Password', 'Team ID', 'Status', 'Session End', 'Score', 'Tasks', 'Actions'].map(h => (
                       <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontSize: 9, color: C.dim, letterSpacing: '0.15em', textTransform: 'uppercase' }}>{h}</th>
                     ))}
                   </tr>
@@ -426,6 +549,7 @@ export default function AdminPanel() {
                     <tr key={t.id} style={{ borderBottom: `1px solid ${C.muted}30` }}>
                       <td style={{ padding: '10px 12px', fontSize: 12, color: C.text }}>{t.name}</td>
                       <td style={{ padding: '10px 12px' }}><Badge v={t.code} col={C.green} /></td>
+                      <td style={{ padding: '10px 12px', fontSize: 10, color: C.sub }}>{(t as any).team_key || '—'}</td>
                       <td style={{ padding: '10px 12px', fontSize: 11 }}>
                         {t.is_active ? <span style={{ color: C.green }}>● ACTIVE</span>
                           : t.started_at ? <span style={{ color: C.dim }}>● ENDED</span>
@@ -457,8 +581,8 @@ export default function AdminPanel() {
                     </tr>
                   ))}
                   {teams.length === 0 && (
-                    <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: C.muted, fontSize: 12 }}>
-                      No teams. Create one above.
+                    <tr><td colSpan={8} style={{ padding: 24, textAlign: 'center', color: C.muted, fontSize: 12 }}>
+                      No teams. Create one above or import from Excel.
                     </td></tr>
                   )}
                 </tbody>

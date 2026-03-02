@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 4000;
 /* ── PostgreSQL pool (Railway provides DATABASE_URL) ──────────── */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || '',
-  ssl: process.env.DATABASE_URL
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('railway')
     ? { rejectUnauthorized: false }
     : false,
 });
@@ -21,11 +21,15 @@ const q = (text, params) => pool.query(text, params);
 
 /* ── Middleware ────────────────────────────────────────────────── */
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    /vercel\.app$/,
-    process.env.FRONTEND_URL,
-  ].filter(Boolean),
+  origin: (origin, callback) => {
+    // Allow no-origin (curl / server-to-server), localhost on any port, and Vercel
+    if (!origin) return callback(null, true);
+    if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
+    if (/^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return callback(null, true);
+    if (/vercel\.app$/.test(origin)) return callback(null, true);
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -63,8 +67,11 @@ async function seedDefaults() {
       id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
       name       TEXT        NOT NULL,
       code       TEXT        NOT NULL UNIQUE,
+      team_key   TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
+    // Add team_key column if it doesn't exist (for existing deployments)
+    await q(`ALTER TABLE teams ADD COLUMN IF NOT EXISTS team_key TEXT`).catch(()=>{});
 
     // ── sessions ────────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS l2_sessions (
@@ -275,17 +282,21 @@ const validateSession = async (req, res, next) => {
    AUTH
 ════════════════════════════════════════════════════════════════ */
 
-/* POST /api/level2/auth — team login (name + code, or code only) */
+/* POST /api/level2/auth — team login (team_id/name + password/code) */
 app.post('/api/level2/auth', async (req, res) => {
-  const code = (req.body.code || '').trim().toUpperCase();
-  const name = (req.body.name || '').trim();
-  if (!code) return res.status(400).json({ error: 'Password (access code) required.' });
+  // Accept both old (name+code) and new (team_id+password) formats
+  const rawPassword = (req.body.password || req.body.code || '').trim();
+  const rawId       = (req.body.team_id  || req.body.name  || '').trim();
+  if (!rawPassword) return res.status(400).json({ error: 'Password required.' });
   try {
-    // If username provided, match both name + code; else fall back to code-only
-    const query = name
-      ? `SELECT id, name FROM teams WHERE UPPER(code)=$1 AND LOWER(name)=LOWER($2) LIMIT 1`
-      : `SELECT id, name FROM teams WHERE UPPER(code)=$1 LIMIT 1`;
-    const params = name ? [code, name] : [code];
+    // Match by team_key (Excel team_id) OR by team name — case-insensitive; password case-insensitive
+    const query = rawId
+      ? `SELECT id, name FROM teams
+         WHERE UPPER(code)=UPPER($1)
+           AND (LOWER(COALESCE(team_key,''))=LOWER($2) OR LOWER(name)=LOWER($2))
+         LIMIT 1`
+      : `SELECT id, name FROM teams WHERE UPPER(code)=UPPER($1) LIMIT 1`;
+    const params = rawId ? [rawPassword, rawId] : [rawPassword];
     const { rows: teams } = await q(query, params);
     if (!teams.length) return res.status(401).json({ error: 'Invalid username or password.' });
     const { id: team_id, name: team_name } = teams[0];
@@ -342,13 +353,13 @@ app.post('/api/level2/submit', validateSession, async (req, res) => {
   const { team_id, task_id, sql_query, result_json,
           is_correct, points_earned, hint_used, attempt_count } = req.body;
   try {
-    // Check BEFORE inserting whether this task was already correctly submitted
-    // to prevent double-counting points on re-submissions
+    // Check if team already earned points for this task (prevent double-counting).
+    // Award points on the FIRST submission where points_earned > 0 (full or partial).
     const { rows: prior } = await q(
-      `SELECT 1 FROM l2_submissions WHERE team_id=$1 AND task_id=$2 AND is_correct=true LIMIT 1`,
+      `SELECT 1 FROM l2_submissions WHERE team_id=$1 AND task_id=$2 AND points_earned>0 LIMIT 1`,
       [team_id, task_id]
     );
-    const firstCorrect = !!is_correct && prior.length === 0;
+    const firstTimeEarning = prior.length === 0;
 
     await q(
       `INSERT INTO l2_submissions
@@ -357,7 +368,7 @@ app.post('/api/level2/submit', validateSession, async (req, res) => {
       [team_id,task_id,sql_query,JSON.stringify(result_json||{}),
        !!is_correct, points_earned||0, !!hint_used, attempt_count||1]
     );
-    if ((points_earned||0) > 0 && firstCorrect) {
+    if ((points_earned||0) > 0 && firstTimeEarning) {
       const col = task_id.startsWith('A')?'section_a_pts':
                   task_id.startsWith('B')?'section_b_pts':
                   task_id.startsWith('C')?'section_c_pts':'bonus_pts';
@@ -459,7 +470,7 @@ app.post('/api/level2/bonus/release', requireAdmin, async (req, res) => {
 app.get('/api/admin/teams', requireAdmin, async (req, res) => {
   try {
     const { rows } = await q(
-      `SELECT t.id, t.name, t.code,
+      `SELECT t.id, t.name, t.code, t.team_key,
               s.is_active, s.ends_at, s.started_at,
               COALESCE(sc.total_points,0) as total_points,
               COALESCE(sc.tasks_completed,0) as tasks_completed
@@ -486,6 +497,41 @@ app.post('/api/admin/teams', requireAdmin, async (req, res) => {
     if (err.code==='23505') return res.status(409).json({ error:'Code already exists' });
     res.status(500).json({ error:'DB error' });
   }
+});
+
+/* POST /api/admin/teams/import — bulk import teams from Excel data */
+app.post('/api/admin/teams/import', requireAdmin, async (req, res) => {
+  const { teams } = req.body;
+  if (!Array.isArray(teams) || teams.length === 0)
+    return res.status(400).json({ error: 'teams array required' });
+
+  let inserted = 0, updated = 0, skipped = 0;
+  const errors = [];
+
+  for (const t of teams) {
+    const teamKey  = String(t.team_id   || '').trim();
+    const teamName = String(t.team_name || '').trim();
+    const password = String(t.password  || '').trim();
+
+    if (!teamName || !password) { skipped++; continue; }
+
+    try {
+      const r = await q(
+        `INSERT INTO teams(id, team_key, name, code)
+         VALUES($1, NULLIF($2,''), $3, $4)
+         ON CONFLICT (code) DO UPDATE
+           SET team_key = EXCLUDED.team_key,
+               name     = EXCLUDED.name`,
+        [uuidv4(), teamKey, teamName, password]
+      );
+      if (r.rowCount > 0) inserted++;
+      else updated++;
+    } catch (err) {
+      skipped++;
+      errors.push(`${teamName}: ${err.message}`);
+    }
+  }
+  res.json({ ok: true, inserted, updated, skipped, errors: errors.slice(0, 10) });
 });
 
 /* DELETE /api/admin/teams/:id */

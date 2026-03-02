@@ -56,7 +56,7 @@ function useTyping(text: string, speed = 40) {
 // ── Lobby Page ─────────────────────────────────────────
 export default function LobbyPage() {
   const router = useRouter();
-  const [teamName, setTeamName] = useState('');
+  const [teamId, setTeamId] = useState('');
   const [teamCode, setTeamCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -84,14 +84,14 @@ export default function LobbyPage() {
 
   const handleDeploy = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teamName.trim()) { setError('▸ USERNAME REQUIRED'); return; }
-    if (!teamCode.trim()) { setError('▸ ACCESS CODE REQUIRED'); return; }
+    if (!teamId.trim()) { setError('▸ TEAM ID REQUIRED'); return; }
+    if (!teamCode.trim()) { setError('▸ PASSWORD REQUIRED'); return; }
     setError(''); setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/level2/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: teamName.trim(), code: teamCode.trim().toUpperCase() }),
+        body: JSON.stringify({ team_id: teamId.trim(), password: teamCode.trim() }),
       });
       const data = await res.json();
       if (!res.ok) { setError(`▸ ${data.error || 'ACCESS DENIED'}`); setLoading(false); return; }
@@ -171,13 +171,13 @@ export default function LobbyPage() {
             <div>
               <label className="block font-mono text-xs tracking-widest mb-2 uppercase"
                 style={{ color: '#00cc66' }}>
-                ▸ TEAM NAME
+                ▸ TEAM ID
               </label>
               <input
                 type="text"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                placeholder="Enter team name..."
+                value={teamId}
+                onChange={(e) => setTeamId(e.target.value)}
+                placeholder="Enter team ID..."
                 className="w-full font-mono text-sm px-3 py-2.5 rounded-sm transition-all"
                 style={{
                   background: 'rgba(0,255,100,0.04)',
@@ -196,13 +196,13 @@ export default function LobbyPage() {
             <div>
               <label className="block font-mono text-xs tracking-widest mb-2 uppercase"
                 style={{ color: '#00cc66' }}>
-                ▸ ACCESS CODE
+                ▸ PASSWORD
               </label>
               <input
                 type="password"
                 value={teamCode}
-                onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
-                placeholder="Enter access code..."
+                onChange={(e) => setTeamCode(e.target.value)}
+                placeholder="Enter password..."
                 className="w-full font-mono text-sm px-3 py-2.5 rounded-sm tracking-widest transition-all"
                 style={{
                   background: 'rgba(0,255,100,0.04)',
