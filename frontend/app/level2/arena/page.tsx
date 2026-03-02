@@ -204,14 +204,8 @@ function ArenaContent() {
       return;
     }
 
-    // Require AI log or checkbox
-    const sub = submissions[activeTaskId];
-    if (!sub?.aiLogged) {
-      setAILogOpen(true);
-      return;
-    }
-
     setIsSubmitting(true);
+    const sub = submissions[activeTaskId];
     const hintsUsed = sub?.hintsUsed || 0;
     const validationResult = validate(activeTaskId, queryResult.rows);
     const { pointsEarned, breakdownMsg } = calculateScore(activeTaskId, validationResult.match, hintsUsed);
