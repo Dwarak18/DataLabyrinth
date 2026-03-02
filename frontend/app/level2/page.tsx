@@ -260,6 +260,19 @@ export default function LobbyPage() {
           <p style={{ color: '#00cc66' }}><span style={{ color: '#4a7a5a' }}>$</span> AWAITING OPERATIVE DEPLOYMENT...</p>
           <p className="animate-pulse" style={{ color: '#00ff88' }}><span style={{ color: '#4a7a5a' }}>$</span> █</p>
         </div>
+
+        {/* Admin link */}
+        <div className="mt-4 text-center">
+          <a
+            href="/admin/level2"
+            className="font-mono text-[10px] tracking-widest uppercase transition-all"
+            style={{ color: '#3a6a4a', textDecoration: 'none' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#ff6b6b'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#3a6a4a'; }}
+          >
+            ⚿ ADMIN ACCESS →
+          </a>
+        </div>
       </div>
     </div>
   );

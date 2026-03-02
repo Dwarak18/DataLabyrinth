@@ -2,6 +2,7 @@
 // components/level2/GameShell.tsx
 // Top HUD bar with timer, score, team info
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface GameShellProps {
   teamId: string;
@@ -20,8 +21,18 @@ export default function GameShell({
   children,
   onExpire,
 }: GameShellProps) {
+  const router = useRouter();
   const [remaining, setRemaining] = useState<number>(0);
   const [expired, setExpired] = useState(false);
+
+  const handleLogout = () => {
+    if (!confirm('End session and return to login?')) return;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(`arena_state_${teamId}`);
+      localStorage.removeItem(`briefing_${teamId}`);
+    }
+    router.push('/level2');
+  };
 
   useEffect(() => {
     const end = new Date(endsAt).getTime();
@@ -62,7 +73,7 @@ export default function GameShell({
         {/* Left */}
         <div className="flex items-center gap-3">
           <div>
-            <p className="text-[9px] font-mono text-zinc-600 tracking-widest uppercase">
+            <p className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">
               BLACKSITE: SYSTEM32
             </p>
             <p className="text-xs font-mono text-bs-cyan tracking-widest uppercase leading-none">
@@ -73,7 +84,7 @@ export default function GameShell({
 
         {/* Center — Team info */}
         <div className="flex flex-col items-center">
-          <p className="text-[9px] font-mono text-zinc-600 tracking-widest uppercase">
+          <p className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">
             OPERATIVE
           </p>
           <p className="text-xs font-mono text-white tracking-widest">
@@ -84,7 +95,7 @@ export default function GameShell({
         {/* Right — Timer + Score */}
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-end">
-            <p className="text-[9px] font-mono text-zinc-600 tracking-widest uppercase">
+            <p className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">
               {expired ? 'MISSION LOCKED' : 'TIME REMAINING'}
             </p>
             <p className={`text-sm font-mono tracking-widest font-bold ${timerClass}`}>
@@ -92,13 +103,27 @@ export default function GameShell({
             </p>
           </div>
           <div className="flex flex-col items-end">
-            <p className="text-[9px] font-mono text-zinc-600 tracking-widest uppercase">
+            <p className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">
               SCORE
             </p>
             <p className="text-sm font-mono text-bs-amber font-bold">
-              {totalScore} <span className="text-[10px] text-zinc-600">pts</span>
+              {totalScore} <span className="text-[10px] text-zinc-500">pts</span>
             </p>
           </div>
+          <button
+            onClick={handleLogout}
+            title="Logout"
+            className="ml-2 px-2 py-1 font-mono text-[10px] tracking-widest uppercase border rounded-sm transition-all"
+            style={{
+              color: '#ff6b6b',
+              borderColor: 'rgba(255,80,80,0.4)',
+              background: 'rgba(255,50,50,0.07)',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,50,50,0.18)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,50,50,0.07)'; }}
+          >
+            ⏏ LOGOUT
+          </button>
         </div>
       </header>
 

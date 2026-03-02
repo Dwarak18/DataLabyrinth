@@ -35,7 +35,7 @@ export default function SectionMap({
 }: SectionMapProps) {
   return (
     <div className="h-full overflow-y-auto space-y-3 pr-1">
-      <div className="text-[10px] font-mono text-zinc-600 tracking-widest uppercase px-1 pb-1 border-b border-bs-border">
+      <div className="text-[10px] font-mono text-bs-green tracking-widest uppercase px-1 pb-1 border-b border-bs-border opacity-70">
         Mission Map
       </div>
 
@@ -51,17 +51,17 @@ export default function SectionMap({
                 flex items-center justify-between px-2 py-1.5
                 border rounded-sm text-[10px] font-mono tracking-wider uppercase
                 ${isLocked
-                  ? 'border-zinc-800 text-zinc-700 bg-zinc-900/30'
+                  ? 'border-zinc-600 text-zinc-400 bg-zinc-900/30'
                   : `border-current ${color} bg-transparent`
                 }
               `}
             >
               <span>{isLocked ? '🔒 ' : '▣ '}{label}</span>
-              <span className="opacity-60">{SECTION_PTS[key]}pts</span>
+              <span className="opacity-70">{SECTION_PTS[key]}pts</span>
             </div>
 
             {isLocked ? (
-              <p className="text-[9px] font-mono text-zinc-700 px-2 py-1">
+              <p className="text-[9px] font-mono text-zinc-400 px-2 py-1">
                 {locked_msg}
               </p>
             ) : (

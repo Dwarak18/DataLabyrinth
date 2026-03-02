@@ -408,32 +408,26 @@ function ArenaContent() {
                 bonusEndsAt={bonusEndsAt}
               />
             )}
-            {dbReady ? (
-              <SqlTerminal
-                task={activeTask}
-                value={queryMap[activeTaskId] || ''}
-                onChange={(v) => setQueryMap({ ...queryMap, [activeTaskId]: v })}
-                onRun={handleRun}
-                onSubmit={handleSubmit}
-                onHint={() => setHintOpen(true)}
-                onAILog={() => setAILogOpen(true)}
-                isRunning={isRunning}
-                isSubmitting={isSubmitting}
-                canSubmit={!!queryResult && !queryResult.error}
-                attemptCount={activeSub?.attempts || 0}
-                hintsUsed={activeSub?.hintsUsed || 0}
-                aiLogged={activeSub?.aiLogged || false}
-                sessionExpired={sessionExpired}
-                bonusExplanation={bonusExplanations[activeTaskId] || ''}
-                onBonusExplanationChange={(v) =>
-                  setBonusExplanations({ ...bonusExplanations, [activeTaskId]: v })
-                }
-              />
-            ) : (
-              <div className="flex items-center justify-center flex-1 text-bs-cyan text-xs font-mono animate-pulse">
-                ▶▶▶ INITIALIZING SQL ENGINE...
-              </div>
-            )}
+            <SqlTerminal
+              task={activeTask}
+              value={queryMap[activeTaskId] || ''}
+              onChange={(v) => setQueryMap({ ...queryMap, [activeTaskId]: v })}
+              onRun={handleRun}
+              onSubmit={handleSubmit}
+              onHint={() => setHintOpen(true)}
+              onAILog={() => setAILogOpen(true)}
+              isRunning={isRunning || !dbReady}
+              isSubmitting={isSubmitting}
+              canSubmit={dbReady && !!queryResult && !queryResult.error}
+              attemptCount={activeSub?.attempts || 0}
+              hintsUsed={activeSub?.hintsUsed || 0}
+              aiLogged={activeSub?.aiLogged || false}
+              sessionExpired={sessionExpired}
+              bonusExplanation={bonusExplanations[activeTaskId] || ''}
+              onBonusExplanationChange={(v) =>
+                setBonusExplanations({ ...bonusExplanations, [activeTaskId]: v })
+              }
+            />
           </main>
 
           {/* RIGHT: Console + Leaderboard */}
@@ -464,7 +458,7 @@ function ArenaContent() {
               onSelectTask={handleSelectTask}
             />
           )}
-          {mobilePanel === 'terminal' && dbReady && (
+          {mobilePanel === 'terminal' && (
             <SqlTerminal
               task={activeTask}
               value={queryMap[activeTaskId] || ''}
@@ -473,9 +467,9 @@ function ArenaContent() {
               onSubmit={handleSubmit}
               onHint={() => setHintOpen(true)}
               onAILog={() => setAILogOpen(true)}
-              isRunning={isRunning}
+              isRunning={isRunning || !dbReady}
               isSubmitting={isSubmitting}
-              canSubmit={!!queryResult && !queryResult.error}
+              canSubmit={dbReady && !!queryResult && !queryResult.error}
               attemptCount={activeSub?.attempts || 0}
               hintsUsed={activeSub?.hintsUsed || 0}
               aiLogged={activeSub?.aiLogged || false}
