@@ -199,20 +199,33 @@ function ArenaContent() {
 
   const handleSubmit = useCallback(async () => {
     if (!dbReady || isSubmitting || sessionExpired || !activeTask) return;
-    if (!queryResult || queryResult.error) {
+    if (!queryResult) {
       setFeedback({ type: 'fail', message: '❌ Run the query first.' });
       return;
     }
 
-    setIsSubmitting(true);
+    // AI log gate — open modal if not yet declared; after modal submits aiLogged=true and user clicks SUBMIT again
     const sub = submissions[activeTaskId];
+    if (!sub?.aiLogged) {
+      setAILogOpen(true);
+      return;
+    }
+
+    setIsSubmitting(true);
     const hintsUsed = sub?.hintsUsed || 0;
-    const validationResult = validate(activeTaskId, queryResult.rows);
-    const { pointsEarned, breakdownMsg } = calculateScore(activeTaskId, validationResult.match, hintsUsed);
+
+    // If query had a SQL error, treat as no-match (0 pts) but still record the attempt
+    const effectiveRows = queryResult.error ? [] : queryResult.rows;
+    const validationResult = validate(activeTaskId, effectiveRows);
+    const { pointsEarned } = calculateScore(activeTaskId, queryResult.error ? 'none' : validationResult.match, hintsUsed);
+    const finalMatch = queryResult.error ? 'none' : validationResult.match;
+    const finalMessage = queryResult.error
+      ? `❌ SQL error — 0 pts recorded.`
+      : validationResult.message;
 
     const newStatus =
-      validationResult.match === 'full'    ? 'correct' :
-      validationResult.match === 'partial' ? 'partial' : 'failed';
+      finalMatch === 'full'    ? 'correct' :
+      finalMatch === 'partial' ? 'partial' : 'failed';
 
     const newAttempts = (sub?.attempts || 0) + 1;
 
@@ -231,12 +244,11 @@ function ArenaContent() {
     setTotalScore(newScore);
     persist(newSubs, newScore, newQueries);
 
-    // Feedback animation
     const feedbackType =
-      validationResult.match === 'full'    ? 'success' :
-      validationResult.match === 'partial' ? 'partial' : 'fail';
+      finalMatch === 'full'    ? 'success' :
+      finalMatch === 'partial' ? 'partial' : 'fail';
 
-    setFeedback({ type: feedbackType, message: validationResult.message, pointsEarned });
+    setFeedback({ type: feedbackType, message: finalMessage, pointsEarned });
 
     // POST to backend
     try {
@@ -248,7 +260,7 @@ function ArenaContent() {
           task_id: activeTaskId,
           sql_query: queryMap[activeTaskId] || '',
           result_json: queryResult,
-          is_correct: validationResult.match === 'full',
+          is_correct: finalMatch === 'full',
           points_earned: pointsEarned,
           hint_used: hintsUsed > 0,
           attempt_count: newAttempts,
@@ -411,7 +423,7 @@ function ArenaContent() {
               dbReady={dbReady}
               isRunning={isRunning}
               isSubmitting={isSubmitting}
-              canSubmit={dbReady && !!queryResult && !queryResult.error}
+              canSubmit={dbReady && !!queryResult}
               attemptCount={activeSub?.attempts || 0}
               hintsUsed={activeSub?.hintsUsed || 0}
               aiLogged={activeSub?.aiLogged || false}
@@ -463,7 +475,7 @@ function ArenaContent() {
               dbReady={dbReady}
               isRunning={isRunning}
               isSubmitting={isSubmitting}
-              canSubmit={dbReady && !!queryResult && !queryResult.error}
+              canSubmit={dbReady && !!queryResult}
               attemptCount={activeSub?.attempts || 0}
               hintsUsed={activeSub?.hintsUsed || 0}
               aiLogged={activeSub?.aiLogged || false}
