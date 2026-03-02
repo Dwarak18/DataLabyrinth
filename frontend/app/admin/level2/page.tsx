@@ -576,6 +576,15 @@ export default function AdminPanel() {
               }} style={{ ...actionBtn(C.green), width: '100%', padding: '8px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 PING /health
               </button>
+              <button onClick={async () => {
+                try {
+                  const d = await api('/api/admin/reseed-teams', { method: 'POST' });
+                  flash(`Reseeded teams: ${d.inserted} new, ${d.total} total`);
+                  loadAll();
+                } catch { flash('Reseed failed', 'err'); }
+              }} style={{ ...actionBtn(C.cyan), width: '100%', padding: '8px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 8 }}>
+                ↺ RESEED TEAMS TO DB
+              </button>
             </div>
 
             {/* Kill all */}

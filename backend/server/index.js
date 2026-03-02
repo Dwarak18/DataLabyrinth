@@ -465,6 +465,49 @@ app.delete('/api/admin/teams/:id', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ error:'DB error' }); }
 });
 
+/* POST /api/admin/reseed-teams — force re-insert all default teams */
+app.post('/api/admin/reseed-teams', requireAdmin, async (req, res) => {
+  const teams = [
+    ['Alpha Squad',    'ALPHA-1'],
+    ['Beta Force',     'BETA-2'],
+    ['Gamma Unit',     'GAMMA-3'],
+    ['Delta Ops',      'DELTA-4'],
+    ['Epsilon Core',   'EPSILON-5'],
+    ['Zeta Strike',    'ZETA-6'],
+    ['Eta Recon',      'ETA-7'],
+    ['Theta Command',  'THETA-8'],
+    ['Iota Division',  'IOTA-9'],
+    ['Kappa Team',     'KAPPA-10'],
+    ['Lambda Squad',   'LAMBDA-11'],
+    ['Mu Force',       'MU-12'],
+    ['Nu Ops',         'NU-13'],
+    ['Xi Recon',       'XI-14'],
+    ['Omicron Unit',   'OMICRON-15'],
+    ['Pi Strike',      'PI-16'],
+    ['Rho Division',   'RHO-17'],
+    ['Sigma Core',     'SIGMA-18'],
+    ['Tau Command',    'TAU-19'],
+    ['Upsilon Team',   'UPSILON-20'],
+    ['Phi Recon',      'PHI-21'],
+    ['Battery',        'GOVINDA'],
+  ];
+  try {
+    let inserted = 0;
+    for (const [name, code] of teams) {
+      const r = await q(
+        `INSERT INTO teams (name,code) VALUES ($1,$2) ON CONFLICT (code) DO NOTHING`,
+        [name, code]
+      );
+      inserted += r.rowCount;
+    }
+    const { rows } = await q(`SELECT name, code FROM teams ORDER BY name`);
+    res.json({ ok: true, inserted, total: rows.length, teams: rows });
+  } catch (err) {
+    console.error('/reseed-teams error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /* GET /api/admin/scores */
 app.get('/api/admin/scores', requireAdmin, async (req, res) => {
   try {
