@@ -86,9 +86,17 @@ export async function initDB(): Promise<void> {
 
   initPromise = (async () => {
     const initSqlJs = (await import('sql.js')).default;
-    const SQL = await initSqlJs({
-      locateFile: (file: string) => `/${file}`,
-    });
+
+    // Try local public/ file first; if that 404s fall back to jsDelivr CDN
+    let SQL: any;
+    try {
+      SQL = await initSqlJs({ locateFile: (f: string) => `/${f}` });
+    } catch {
+      SQL = await initSqlJs({
+        locateFile: (f: string) =>
+          `https://cdn.jsdelivr.net/npm/sql.js@1.12.0/dist/${f}`,
+      });
+    }
 
     db = new SQL.Database();
 

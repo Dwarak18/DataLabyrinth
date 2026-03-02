@@ -19,6 +19,7 @@ interface SqlTerminalProps {
   onSubmit: () => void;
   onHint: () => void;
   onAILog: () => void;
+  dbReady: boolean;
   isRunning: boolean;
   isSubmitting: boolean;
   canSubmit: boolean;
@@ -67,6 +68,7 @@ export default function SqlTerminal({
   onSubmit,
   onHint,
   onAILog,
+  dbReady,
   isRunning,
   isSubmitting,
   canSubmit,
@@ -183,22 +185,30 @@ export default function SqlTerminal({
         </div>
       )}
 
+      {/* DB loading banner */}
+      {!dbReady && (
+        <div className="flex items-center gap-2 text-bs-cyan text-xs font-mono px-3 py-2 border border-bs-border rounded-sm bg-bs-surface animate-pulse">
+          <span>⏳</span>
+          <span>LOADING SQL ENGINE... please wait</span>
+        </div>
+      )}
+
       {/* Action buttons */}
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={onRun}
-          disabled={isRunning || sessionExpired}
+          disabled={!dbReady || isRunning || sessionExpired}
           className="bs-btn bs-btn-green flex items-center gap-1"
         >
-          {isRunning ? '⏳ RUNNING...' : '▶ RUN QUERY'}
+          {isRunning ? '⏳ RUNNING...' : '▶ RUN'}
         </button>
 
         <button
           onClick={onSubmit}
-          disabled={isSubmitting || sessionExpired || !canSubmit}
+          disabled={!dbReady || isSubmitting || sessionExpired || !canSubmit}
           className="bs-btn bs-btn-cyan flex items-center gap-1"
         >
-          {isSubmitting ? '⏳ SUBMITTING...' : '⚡ SUBMIT INTEL'}
+          {isSubmitting ? '⏳ SUBMITTING...' : '⚡ SUBMIT'}
         </button>
 
         <button
