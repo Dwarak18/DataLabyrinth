@@ -131,6 +131,49 @@ async function seedDefaults() {
     )`);
     await q(`INSERT INTO l2_bonus_state (id) VALUES (1) ON CONFLICT DO NOTHING`);
 
+    // ── game dataset tables ──────────────────────────────────────────
+    await q(`CREATE TABLE IF NOT EXISTS students (
+      id   INTEGER PRIMARY KEY,
+      name TEXT NOT NULL,
+      dept TEXT NOT NULL,
+      year INTEGER NOT NULL,
+      cgpa NUMERIC(3,1) NOT NULL
+    )`);
+    await q(`CREATE TABLE IF NOT EXISTS marks (
+      id         INTEGER PRIMARY KEY,
+      student_id INTEGER NOT NULL REFERENCES students(id),
+      subject    TEXT NOT NULL,
+      marks      INTEGER
+    )`);
+    await q(`CREATE TABLE IF NOT EXISTS attendance (
+      id         INTEGER PRIMARY KEY,
+      student_id INTEGER NOT NULL REFERENCES students(id),
+      subject    TEXT NOT NULL,
+      attended   INTEGER NOT NULL,
+      total      INTEGER NOT NULL
+    )`);
+
+    // seed game data only if empty
+    const { rows: sc } = await q(`SELECT COUNT(*) FROM students`);
+    if (parseInt(sc[0].count) === 0) {
+      const students = require('./mockData/students.json');
+      for (const s of students) {
+        await q(`INSERT INTO students(id,name,dept,year,cgpa) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
+          [s.id, s.name, s.dept, s.year, s.cgpa]);
+      }
+      const marks = require('./mockData/marks.json');
+      for (const m of marks) {
+        await q(`INSERT INTO marks(id,student_id,subject,marks) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
+          [m.id, m.student_id, m.subject, m.marks]);
+      }
+      const attendance = require('./mockData/attendance.json');
+      for (const a of attendance) {
+        await q(`INSERT INTO attendance(id,student_id,subject,attended,total) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
+          [a.id, a.student_id, a.subject, a.attended, a.total]);
+      }
+      console.log('[BLACKSITE] Game dataset seeded.');
+    }
+
     // ── indexes ──────────────────────────────────────────────────────
     await q(`CREATE INDEX IF NOT EXISTS idx_l2_submissions_team ON l2_submissions(team_id)`).catch(()=>{});
     await q(`CREATE INDEX IF NOT EXISTS idx_l2_submissions_task ON l2_submissions(task_id)`).catch(()=>{});
@@ -501,6 +544,37 @@ app.get('/api/admin/export.csv', requireAdmin, async (req, res) => {
 app.get('/api/level2/mock/students',   (_,res)=>res.json(require('./mockData/students.json')));
 app.get('/api/level2/mock/marks',      (_,res)=>res.json(require('./mockData/marks.json')));
 app.get('/api/level2/mock/attendance', (_,res)=>res.json(require('./mockData/attendance.json')));
+
+/* POST /api/level2/query — safe SELECT-only SQL runner */
+const BLOCKED_SQL_KEYWORDS = ['drop','delete','insert','update','create','alter','attach','detach','replace','truncate','pragma','vacuum','copy','grant','revoke'];
+const BLOCKED_TABLES = ['teams','admins','l2_sessions','l2_submissions','l2_scores','l2_ai_logs','l2_hints_used','l2_bonus_state'];
+
+app.post('/api/level2/query', async (req, res) => {
+  const { sql: sqlQuery } = req.body || {};
+  if (!sqlQuery || typeof sqlQuery !== 'string') return res.status(400).json({ error: 'sql required' });
+  const trimmed = sqlQuery.trim();
+  const lower = trimmed.toLowerCase();
+  // Must be SELECT
+  if (!lower.startsWith('select')) return res.status(400).json({ error: '⛔ Only SELECT queries are allowed.' });
+  // Block dangerous keywords
+  for (const kw of BLOCKED_SQL_KEYWORDS) {
+    if (new RegExp(`\\b${kw}\\b`).test(lower))
+      return res.status(400).json({ error: `⛔ Keyword '${kw.toUpperCase()}' is not allowed.` });
+  }
+  // Block access to non-game tables
+  for (const tbl of BLOCKED_TABLES) {
+    if (new RegExp(`\\b${tbl}\\b`).test(lower))
+      return res.status(403).json({ error: `⛔ Table '${tbl}' is not accessible.` });
+  }
+  try {
+    const result = await pool.query(trimmed);
+    const columns = result.fields.map(f => f.name);
+    const data = result.rows.map(r => columns.map(c => r[c] ?? null));
+    res.json({ columns, rows: data });
+  } catch (err) {
+    res.json({ error: `SQL Error: ${err.message}` });
+  }
+});
 
 /* ── Admin Login (DB-backed) ────────────────────────────────────── */
 app.post('/api/admin/login', async (req, res) => {

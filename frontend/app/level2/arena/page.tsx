@@ -89,9 +89,9 @@ function ArenaContent() {
     }
   }, [teamId]);
 
-  // Init sql.js
+  // Init — no WASM needed; backend handles SQL now
   useEffect(() => {
-    initDB().then(() => setDbReady(true)).catch(console.error);
+    initDB().then(() => setDbReady(true));
   }, []);
 
   // Load persisted state from localStorage
@@ -187,17 +187,14 @@ function ArenaContent() {
 
   // ── Handlers ───────────────────────────────────────────
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     if (!dbReady || isRunning) return;
     setIsRunning(true);
     setFeedback({ type: null, message: '' });
-    // Slight delay for UX
-    setTimeout(() => {
-      const q = queryMap[activeTaskId] || '';
-      const result = runQuery(q);
-      setQueryResult(result);
-      setIsRunning(false);
-    }, 120);
+    const query = queryMap[activeTaskId] || '';
+    const result = await runQuery(query);
+    setQueryResult(result);
+    setIsRunning(false);
   }, [dbReady, isRunning, activeTaskId, queryMap]);
 
   const handleSubmit = useCallback(async () => {
