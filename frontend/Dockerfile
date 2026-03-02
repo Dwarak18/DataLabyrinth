@@ -3,8 +3,8 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
+COPY package.json ./
+RUN npm install --legacy-peer-deps
 # Ensure the musl SWC binary is present (required on Alpine/musl builds)
 RUN npm install @next/swc-linux-x64-musl --no-save 2>/dev/null || true
 

@@ -11,7 +11,7 @@ services:
       POSTGRES_DB: blacksite
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./railway/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d blacksite"]
       interval: 5s
@@ -22,7 +22,7 @@ services:
   # Next.js frontend
   frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: http://localhost:4000
@@ -39,8 +39,8 @@ services:
   # Express backend
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.server
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: data-labyrinth-backend
     ports:
       - "4000:4000"

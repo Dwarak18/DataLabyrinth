@@ -4,7 +4,7 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat
 
 # Only copy what the Express server needs
-COPY package.json package-lock.json ./
+COPY package.json ./
 RUN npm install --only=production --legacy-peer-deps
 
 COPY server/ ./server/
