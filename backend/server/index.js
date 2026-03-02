@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 4000;
 /* ── PostgreSQL pool (Railway provides DATABASE_URL) ──────────── */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || '',
-  ssl: (process.env.DATABASE_URL || '').includes('railway')
+  ssl: process.env.DATABASE_URL
     ? { rejectUnauthorized: false }
     : false,
 });
