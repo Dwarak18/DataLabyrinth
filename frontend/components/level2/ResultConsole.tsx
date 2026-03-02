@@ -44,9 +44,7 @@ export default function ResultConsole({ result, feedback, isRunning }: ResultCon
           className={`px-3 py-2 border-b text-xs font-mono tracking-wide ${feedbackClass} border-current`}
         >
           {feedback.message}
-          {feedback.pointsEarned !== undefined && feedback.pointsEarned > 0 && (
-            <span className="ml-2 font-bold">+{feedback.pointsEarned} PTS</span>
-          )}
+
         </div>
       )}
 
@@ -60,10 +58,10 @@ export default function ResultConsole({ result, feedback, isRunning }: ResultCon
         )}
 
         {!isRunning && !result && (
-          <div className="text-zinc-700 text-xs font-mono p-4 text-center">
+          <div className="text-zinc-400 text-xs font-mono p-4 text-center">
             <p className="text-2xl mb-2">⌨</p>
             <p>No query executed yet.</p>
-            <p className="text-zinc-800 mt-1">Press ▶ RUN QUERY or Ctrl+Enter</p>
+            <p className="text-zinc-500 mt-1">Press ▶ RUN QUERY or Ctrl+Enter</p>
           </div>
         )}
 

@@ -118,9 +118,6 @@ export default function SqlTerminal({
         </div>
         <div className="flex items-center gap-3 text-[10px] font-mono text-zinc-500">
           <span>ATTEMPT {attemptCount} / ∞</span>
-          {hintsUsed > 0 && (
-            <span className="text-bs-amber">HINTS: {hintsUsed}</span>
-          )}
           {aiLogged && (
             <span className="text-bs-purple">🤖 AI LOGGED</span>
           )}
@@ -142,10 +139,10 @@ export default function SqlTerminal({
       {/* CodeMirror SQL editor */}
       <div className="flex-1 border border-bs-border rounded-sm overflow-hidden min-h-[180px]">
         <div className="flex items-center justify-between px-3 py-1.5 bg-bs-surface border-b border-bs-border">
-          <span className="text-[10px] font-mono text-zinc-500 tracking-widest">
+          <span className="text-[10px] font-mono text-zinc-400 tracking-widest">
             SQL EDITOR — Ctrl+Enter to run
           </span>
-          <span className="text-[10px] font-mono text-zinc-700">
+          <span className="text-[10px] font-mono text-zinc-500">
             SELECT only
           </span>
         </div>
@@ -203,16 +200,6 @@ export default function SqlTerminal({
         >
           {isSubmitting ? '⏳ SUBMITTING...' : '⚡ SUBMIT INTEL'}
         </button>
-
-        {task.hintsAllowed && (
-          <button
-            onClick={onHint}
-            disabled={sessionExpired}
-            className="bs-btn bs-btn-amber flex items-center gap-1"
-          >
-            💡 BURN RESOURCE
-          </button>
-        )}
 
         <button
           onClick={onAILog}

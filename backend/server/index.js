@@ -268,6 +268,14 @@ app.post('/api/level2/submit', validateSession, async (req, res) => {
   const { team_id, task_id, sql_query, result_json,
           is_correct, points_earned, hint_used, attempt_count } = req.body;
   try {
+    // Check BEFORE inserting whether this task was already correctly submitted
+    // to prevent double-counting points on re-submissions
+    const { rows: prior } = await q(
+      `SELECT 1 FROM l2_submissions WHERE team_id=$1 AND task_id=$2 AND is_correct=true LIMIT 1`,
+      [team_id, task_id]
+    );
+    const firstCorrect = !!is_correct && prior.length === 0;
+
     await q(
       `INSERT INTO l2_submissions
          (team_id,task_id,sql_query,result_json,is_correct,points_earned,hint_used,attempt_count,submitted_at)
@@ -275,7 +283,7 @@ app.post('/api/level2/submit', validateSession, async (req, res) => {
       [team_id,task_id,sql_query,JSON.stringify(result_json||{}),
        !!is_correct, points_earned||0, !!hint_used, attempt_count||1]
     );
-    if ((points_earned||0) > 0) {
+    if ((points_earned||0) > 0 && firstCorrect) {
       const col = task_id.startsWith('A')?'section_a_pts':
                   task_id.startsWith('B')?'section_b_pts':
                   task_id.startsWith('C')?'section_c_pts':'bonus_pts';
