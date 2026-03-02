@@ -125,7 +125,7 @@ app.post('/api/level2/auth', async (req, res) => {
     res.json({ ok:true, team_id, team_name, ends_at, resumed:false });
   } catch (err) {
     console.error('/auth error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', detail: err.message });
   }
 });
 
@@ -273,7 +273,7 @@ app.get('/api/admin/teams', requireAdmin, async (req, res) => {
        ORDER BY t.name`
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error:'DB error' }); }
+  } catch (err) { res.status(500).json({ error:'DB error', detail: err.message }); }
 });
 
 /* POST /api/admin/teams — create team */
@@ -443,6 +443,26 @@ app.get('/health', async (_,res) => {
     await q('SELECT 1');
     res.json({ status:'ok', db:'connected', ts:new Date().toISOString() });
   } catch { res.status(503).json({ status:'error', db:'unreachable' }); }
+});
+
+/* ── Diagnostics — lists which tables exist & row counts ────────── */
+app.get('/diag', async (_,res) => {
+  const tables = ['admins','teams','l2_sessions','l2_submissions','l2_scores','l2_ai_logs','l2_hints_used','l2_bonus_state'];
+  const results = {};
+  for (const t of tables) {
+    try {
+      const r = await q(`SELECT COUNT(*) FROM ${t}`);
+      results[t] = `ok (${r.rows[0].count} rows)`;
+    } catch (e) {
+      results[t] = `ERROR: ${e.message}`;
+    }
+  }
+  // Also test a simple team auth query
+  try {
+    const r = await q(`SELECT id,name FROM teams WHERE UPPER(code)=$1 LIMIT 1`,['GOVINDA']);
+    results['_auth_query'] = r.rows.length ? `ok — found: ${r.rows[0].name}` : 'no row found for GOVINDA';
+  } catch(e) { results['_auth_query'] = `ERROR: ${e.message}`; }
+  res.json(results);
 });
 
 app.listen(PORT, () => {
