@@ -12,8 +12,6 @@ CREATE TABLE IF NOT EXISTS admins (
   password   TEXT        NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-INSERT INTO admins (username, password) VALUES ('heisenberg', 'heisenberg')
-  ON CONFLICT (username) DO NOTHING;
 
 -- ── Teams (login credentials) ─────────────────────────────────
 CREATE TABLE IF NOT EXISTS teams (
@@ -93,30 +91,3 @@ CREATE INDEX IF NOT EXISTS idx_l2_submissions_team ON l2_submissions(team_id);
 CREATE INDEX IF NOT EXISTS idx_l2_submissions_task ON l2_submissions(task_id);
 CREATE INDEX IF NOT EXISTS idx_l2_scores_points    ON l2_scores(total_points DESC);
 
--- ============================================================
--- SEED TEAMS  (edit names/codes before running in production)
--- These codes are what teams enter on the Lobby screen.
--- ============================================================
-INSERT INTO teams (name, code) VALUES
-  ('Alpha Squad',   'ALPHA-1'),
-  ('Bravo Team',    'BRAVO-2'),
-  ('Charlie Unit',  'CHARLIE-3'),
-  ('Delta Force',   'DELTA-4'),
-  ('Echo Protocol', 'ECHO-5'),
-  ('Foxtrot Cell',  'FOXTROT-6'),
-  ('Ghost Sector',  'GHOST-7'),
-  ('Hydra Base',    'HYDRA-8'),
-  ('Iron Cipher',   'IRON-9'),
-  ('Juliet Core',   'JULIET-10'),
-  ('Kilo Breach',   'KILO-11'),
-  ('Lima Signal',   'LIMA-12'),
-  ('Mike Recon',    'MIKE-13'),
-  ('Nova Strike',   'NOVA-14'),
-  ('Oscar Grid',    'OSCAR-15'),
-  ('Papa Hex',      'PAPA-16'),
-  ('Quebec Ops',    'QUEBEC-17'),
-  ('Romeo Vault',   'ROMEO-18'),
-  ('Sierra Node',   'SIERRA-19'),
-  ('Tango Net',     'TANGO-20'),
-  ('Battery',       'GOVINDA')
-ON CONFLICT (code) DO NOTHING;
