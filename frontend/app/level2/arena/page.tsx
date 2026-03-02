@@ -199,12 +199,8 @@ function ArenaContent() {
 
   const handleSubmit = useCallback(async () => {
     if (!dbReady || isSubmitting || sessionExpired || !activeTask) return;
-    if (!queryResult) {
-      setFeedback({ type: 'fail', message: '❌ Run the query first.' });
-      return;
-    }
 
-    // AI log gate — open modal if not yet declared; after modal submits aiLogged=true and user clicks SUBMIT again
+    // AI log gate — open modal if not yet declared
     const sub = submissions[activeTaskId];
     if (!sub?.aiLogged) {
       setAILogOpen(true);
@@ -214,21 +210,22 @@ function ArenaContent() {
     setIsSubmitting(true);
     const hintsUsed = sub?.hintsUsed || 0;
 
-    // If query had a SQL error, treat as no-match (0 pts) but still record the attempt
-    const effectiveRows = queryResult.error ? [] : queryResult.rows;
+    // No result or SQL error → 0 pts; partial result → partial pts
+    const effectiveRows = (!queryResult || queryResult.error) ? [] : queryResult.rows;
     const validationResult = validate(activeTaskId, effectiveRows);
-    const { pointsEarned } = calculateScore(activeTaskId, queryResult.error ? 'none' : validationResult.match, hintsUsed);
-    const finalMatch = queryResult.error ? 'none' : validationResult.match;
-    const finalMessage = queryResult.error
+    const effectiveMatch = (!queryResult || queryResult.error) ? 'none' : validationResult.match;
+    const { pointsEarned } = calculateScore(activeTaskId, effectiveMatch, hintsUsed);
+    const finalMessage = !queryResult
+      ? `❌ No query run — 0 pts recorded.`
+      : queryResult.error
       ? `❌ SQL error — 0 pts recorded.`
       : validationResult.message;
 
     const newStatus =
-      finalMatch === 'full'    ? 'correct' :
-      finalMatch === 'partial' ? 'partial' : 'failed';
+      effectiveMatch === 'full'    ? 'correct' :
+      effectiveMatch === 'partial' ? 'partial' : 'failed';
 
     const newAttempts = (sub?.attempts || 0) + 1;
-
     const newSub: SubmissionState = {
       attempts: newAttempts,
       hintsUsed,
@@ -238,16 +235,11 @@ function ArenaContent() {
 
     const newSubs = { ...submissions, [activeTaskId]: newSub };
     const newScore = totalScore + pointsEarned;
-    const newQueries = queryMap;
-
     setSubmissions(newSubs);
     setTotalScore(newScore);
-    persist(newSubs, newScore, newQueries);
+    persist(newSubs, newScore, queryMap);
 
-    const feedbackType =
-      finalMatch === 'full'    ? 'success' :
-      finalMatch === 'partial' ? 'partial' : 'fail';
-
+    const feedbackType = effectiveMatch === 'full' ? 'success' : effectiveMatch === 'partial' ? 'partial' : 'fail';
     setFeedback({ type: feedbackType, message: finalMessage, pointsEarned });
 
     // POST to backend
@@ -260,7 +252,7 @@ function ArenaContent() {
           task_id: activeTaskId,
           sql_query: queryMap[activeTaskId] || '',
           result_json: queryResult,
-          is_correct: finalMatch === 'full',
+          is_correct: effectiveMatch === 'full',
           points_earned: pointsEarned,
           hint_used: hintsUsed > 0,
           attempt_count: newAttempts,
@@ -271,10 +263,29 @@ function ArenaContent() {
     }
 
     setIsSubmitting(false);
+
+    // Auto-advance to next unlocked unsubmitted task
+    const newSubmittedIds = new Set(
+      Object.entries(newSubs)
+        .filter(([, s]) => s.status !== 'idle')
+        .map(([id]) => id)
+    );
+    const newSectionState = computeSectionState(newSubmittedIds, bonusReleased);
+    const currentIdx = TASKS.findIndex((t) => t.id === activeTaskId);
+    const nextTask = TASKS.slice(currentIdx + 1).find((t) => {
+      const playable = isTaskPlayable(t.section as TaskSection, newSectionState, t.unlockAfter, newSubmittedIds);
+      return playable && (!newSubs[t.id] || newSubs[t.id].status === 'idle');
+    });
+    if (nextTask) {
+      setActiveTaskId(nextTask.id);
+      setQueryResult(null);
+      setFeedback({ type: null, message: '' });
+      setMobilePanel('terminal');
+    }
   }, [
     dbReady, isSubmitting, sessionExpired, activeTask,
     queryResult, submissions, activeTaskId,
-    totalScore, queryMap, teamId, persist,
+    totalScore, queryMap, teamId, persist, bonusReleased,
   ]);
 
   const handleHintConfirm = useCallback(async (hintIndex: number) => {
@@ -423,7 +434,7 @@ function ArenaContent() {
               dbReady={dbReady}
               isRunning={isRunning}
               isSubmitting={isSubmitting}
-              canSubmit={dbReady && !!queryResult}
+              canSubmit={dbReady}
               attemptCount={activeSub?.attempts || 0}
               hintsUsed={activeSub?.hintsUsed || 0}
               aiLogged={activeSub?.aiLogged || false}
@@ -475,7 +486,7 @@ function ArenaContent() {
               dbReady={dbReady}
               isRunning={isRunning}
               isSubmitting={isSubmitting}
-              canSubmit={dbReady && !!queryResult}
+              canSubmit={dbReady}
               attemptCount={activeSub?.attempts || 0}
               hintsUsed={activeSub?.hintsUsed || 0}
               aiLogged={activeSub?.aiLogged || false}
