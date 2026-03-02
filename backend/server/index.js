@@ -239,7 +239,7 @@ app.post('/api/level2/auth', async (req, res) => {
     res.json({ ok:true, team_id, team_name, ends_at, resumed:false });
   } catch (err) {
     console.error('/auth error:', err);
-    res.status(500).json({ error: 'Internal server error', detail: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -387,7 +387,7 @@ app.get('/api/admin/teams', requireAdmin, async (req, res) => {
        ORDER BY t.name`
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ error:'DB error', detail: err.message }); }
+  } catch (err) { res.status(500).json({ error:'DB error' }); }
 });
 
 /* POST /api/admin/teams — create team */
