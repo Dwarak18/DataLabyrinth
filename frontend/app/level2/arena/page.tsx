@@ -469,7 +469,8 @@ function ArenaContent() {
               onSubmit={handleSubmit}
               onHint={() => setHintOpen(true)}
               onAILog={() => setAILogOpen(true)}
-              isRunning={isRunning || !dbReady}
+              dbReady={dbReady}
+              isRunning={isRunning}
               isSubmitting={isSubmitting}
               canSubmit={dbReady && !!queryResult && !queryResult.error}
               attemptCount={activeSub?.attempts || 0}
