@@ -116,7 +116,7 @@ export default function SqlTerminal({
             SEC {task.section}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-[10px] font-mono text-zinc-500">
+        <div className="flex items-center gap-3 text-[10px] font-mono text-zinc-300">
           <span>ATTEMPT {attemptCount} / ∞</span>
           {aiLogged && (
             <span className="text-bs-purple">🤖 AI LOGGED</span>

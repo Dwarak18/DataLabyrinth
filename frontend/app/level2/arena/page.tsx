@@ -302,12 +302,13 @@ function ArenaContent() {
     setSubmissions(newSubs);
     persist(newSubs, totalScore, queryMap);
     try {
-      await fetch(`${API_URL}/api/level2/ailog`, {
+      const r = await fetch(`${API_URL}/api/level2/ailog`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ team_id: teamId, task_id: activeTaskId, ...log }),
       });
-    } catch {}
+      if (!r.ok) console.error('ailog save failed:', await r.text());
+    } catch (e) { console.error('ailog network error:', e); }
   }, [submissions, activeTaskId, totalScore, queryMap, teamId, persist]);
 
   const handleSelectTask = (taskId: string) => {

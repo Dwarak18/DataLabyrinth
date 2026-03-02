@@ -278,48 +278,49 @@ body {
 }
 
 .bs-btn-green {
-  background: transparent;
-  color: var(--bs-green);
+  background: rgba(0,255,136,0.15);
+  color: #ffffff;
   border-color: var(--bs-green);
 }
 .bs-btn-green:hover {
-  background: rgba(0,255,136,0.1);
+  background: rgba(0,255,136,0.28);
   box-shadow: 0 0 8px var(--bs-green);
 }
 
 .bs-btn-cyan {
-  background: transparent;
-  color: var(--bs-cyan);
+  background: rgba(0,212,255,0.15);
+  color: #ffffff;
   border-color: var(--bs-cyan);
 }
 .bs-btn-cyan:hover {
-  background: rgba(0,212,255,0.1);
+  background: rgba(0,212,255,0.28);
   box-shadow: 0 0 8px var(--bs-cyan);
 }
 
 .bs-btn-amber {
-  background: transparent;
-  color: var(--bs-amber);
+  background: rgba(255,170,0,0.15);
+  color: #ffffff;
   border-color: var(--bs-amber);
 }
 .bs-btn-amber:hover {
-  background: rgba(255,170,0,0.1);
+  background: rgba(255,170,0,0.28);
   box-shadow: 0 0 8px var(--bs-amber);
 }
 
 .bs-btn-red {
-  background: transparent;
-  color: var(--bs-red);
+  background: rgba(255,59,59,0.15);
+  color: #ffffff;
   border-color: var(--bs-red);
 }
 .bs-btn-red:hover {
-  background: rgba(255,59,59,0.1);
+  background: rgba(255,59,59,0.28);
   box-shadow: 0 0 8px var(--bs-red);
 }
 
 .bs-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: not-allowed;
+  color: #cccccc;
 }
 
 /* Section label */

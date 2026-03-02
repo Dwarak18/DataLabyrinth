@@ -338,7 +338,7 @@ app.post('/api/level2/hint', validateSession, async (req, res) => {
 });
 
 /* POST /api/level2/ailog */
-app.post('/api/level2/ailog', validateSession, async (req, res) => {
+app.post('/api/level2/ailog', async (req, res) => {
   const { team_id, task_id, toolUsed, promptUsed, modification, understanding } = req.body;
   try {
     await q(
