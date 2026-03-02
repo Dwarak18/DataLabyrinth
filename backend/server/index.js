@@ -44,20 +44,134 @@ const requireAdmin = async (req, res, next) => {
   return res.status(401).json({ error: 'Unauthorized' });
 };
 
-/* ── Startup: seed default admin + battery team ──────────────────── */
+/* ── Startup: create all tables + seed defaults ───────────────────── */
 async function seedDefaults() {
   try {
+    // Enable UUID extension (needed on some PG versions)
+    await q(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`).catch(()=>{});
+
+    // ── admins ──────────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS admins (
-      id SERIAL PRIMARY KEY, username TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW()
+      id         SERIAL      PRIMARY KEY,
+      username   TEXT        NOT NULL UNIQUE,
+      password   TEXT        NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
+
+    // ── teams ───────────────────────────────────────────────────────
+    await q(`CREATE TABLE IF NOT EXISTS teams (
+      id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      name       TEXT        NOT NULL,
+      code       TEXT        NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
+
+    // ── sessions ────────────────────────────────────────────────────
+    await q(`CREATE TABLE IF NOT EXISTS l2_sessions (
+      id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      team_id    UUID        NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+      started_at TIMESTAMPTZ DEFAULT NOW(),
+      ends_at    TIMESTAMPTZ NOT NULL,
+      is_active  BOOLEAN     DEFAULT TRUE,
+      UNIQUE (team_id)
+    )`);
+
+    // ── submissions ─────────────────────────────────────────────────
+    await q(`CREATE TABLE IF NOT EXISTS l2_submissions (
+      id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      team_id       UUID        NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+      task_id       TEXT        NOT NULL,
+      sql_query     TEXT,
+      result_json   JSONB,
+      is_correct    BOOLEAN     DEFAULT FALSE,
+      points_earned INTEGER     DEFAULT 0,
+      hint_used     BOOLEAN     DEFAULT FALSE,
+      attempt_count INTEGER     DEFAULT 1,
+      submitted_at  TIMESTAMPTZ DEFAULT NOW()
+    )`);
+
+    // ── scores ──────────────────────────────────────────────────────
+    await q(`CREATE TABLE IF NOT EXISTS l2_scores (
+      team_id         UUID    PRIMARY KEY REFERENCES teams(id) ON DELETE CASCADE,
+      total_points    INTEGER DEFAULT 0,
+      tasks_completed INTEGER DEFAULT 0,
+      section_a_pts   INTEGER DEFAULT 0,
+      section_b_pts   INTEGER DEFAULT 0,
+      section_c_pts   INTEGER DEFAULT 0,
+      bonus_pts       INTEGER DEFAULT 0,
+      last_submit_at  TIMESTAMPTZ
+    )`);
+
+    // ── ai logs ─────────────────────────────────────────────────────
+    await q(`CREATE TABLE IF NOT EXISTS l2_ai_logs (
+      id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      team_id       UUID        NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+      task_id       TEXT        NOT NULL,
+      tool_used     TEXT,
+      prompt_used   TEXT,
+      modification  TEXT,
+      understanding TEXT,
+      logged_at     TIMESTAMPTZ DEFAULT NOW()
+    )`);
+
+    // ── hints ────────────────────────────────────────────────────────
+    await q(`CREATE TABLE IF NOT EXISTS l2_hints_used (
+      team_id   UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+      task_id   TEXT NOT NULL,
+      used_at   TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (team_id, task_id)
+    )`);
+
+    // ── bonus state ──────────────────────────────────────────────────
+    await q(`CREATE TABLE IF NOT EXISTS l2_bonus_state (
+      id          INTEGER PRIMARY KEY DEFAULT 1,
+      released_at TIMESTAMPTZ,
+      ends_at     TIMESTAMPTZ,
+      CONSTRAINT single_row CHECK (id = 1)
+    )`);
+    await q(`INSERT INTO l2_bonus_state (id) VALUES (1) ON CONFLICT DO NOTHING`);
+
+    // ── indexes ──────────────────────────────────────────────────────
+    await q(`CREATE INDEX IF NOT EXISTS idx_l2_submissions_team ON l2_submissions(team_id)`).catch(()=>{});
+    await q(`CREATE INDEX IF NOT EXISTS idx_l2_submissions_task ON l2_submissions(task_id)`).catch(()=>{});
+    await q(`CREATE INDEX IF NOT EXISTS idx_l2_scores_points    ON l2_scores(total_points DESC)`).catch(()=>{});
+
+    // ── default credentials ──────────────────────────────────────────
     await q(`INSERT INTO admins (username, password) VALUES ('heisenberg','heisenberg')
              ON CONFLICT (username) DO NOTHING`);
-    await q(`INSERT INTO teams (name, code) VALUES ('Battery','GOVINDA')
-             ON CONFLICT (code) DO NOTHING`);
-    console.log('[BLACKSITE] Default credentials seeded.');
+
+    // ── 21 competition teams ─────────────────────────────────────────
+    const teams = [
+      ['Alpha Squad',    'ALPHA-1'],
+      ['Beta Force',     'BETA-2'],
+      ['Gamma Unit',     'GAMMA-3'],
+      ['Delta Ops',      'DELTA-4'],
+      ['Epsilon Core',   'EPSILON-5'],
+      ['Zeta Strike',    'ZETA-6'],
+      ['Eta Recon',      'ETA-7'],
+      ['Theta Command',  'THETA-8'],
+      ['Iota Division',  'IOTA-9'],
+      ['Kappa Team',     'KAPPA-10'],
+      ['Lambda Squad',   'LAMBDA-11'],
+      ['Mu Force',       'MU-12'],
+      ['Nu Ops',         'NU-13'],
+      ['Xi Recon',       'XI-14'],
+      ['Omicron Unit',   'OMICRON-15'],
+      ['Pi Strike',      'PI-16'],
+      ['Rho Division',   'RHO-17'],
+      ['Sigma Core',     'SIGMA-18'],
+      ['Tau Command',    'TAU-19'],
+      ['Upsilon Team',   'UPSILON-20'],
+      ['Phi Recon',      'PHI-21'],
+      ['Battery',        'GOVINDA'],   // default test team
+    ];
+    for (const [name, code] of teams) {
+      await q(`INSERT INTO teams (name,code) VALUES ($1,$2) ON CONFLICT (code) DO NOTHING`, [name, code]);
+    }
+
+    console.log('[BLACKSITE] DB schema ensured + defaults seeded.');
   } catch (e) {
-    console.warn('[BLACKSITE] seedDefaults skipped:', e.message);
+    console.error('[BLACKSITE] seedDefaults ERROR:', e.message);
   }
 }
 seedDefaults();
