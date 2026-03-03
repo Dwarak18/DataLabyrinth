@@ -57,7 +57,6 @@ function useTyping(text: string, speed = 40) {
 export default function LobbyPage() {
   const router = useRouter();
   const [teamId, setTeamId] = useState('');
-  const [teamCode, setTeamCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTeams, setActiveTeams] = useState<number>(0);
@@ -85,13 +84,12 @@ export default function LobbyPage() {
   const handleDeploy = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!teamId.trim()) { setError('▸ TEAM ID REQUIRED'); return; }
-    if (!teamCode.trim()) { setError('▸ PASSWORD REQUIRED'); return; }
     setError(''); setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/level2/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team_id: teamId.trim(), password: teamCode.trim() }),
+        body: JSON.stringify({ team_id: teamId.trim() }),
       });
       const data = await res.json();
       if (!res.ok) { setError(`▸ ${data.error || 'ACCESS DENIED'}`); setLoading(false); return; }
@@ -189,30 +187,6 @@ export default function LobbyPage() {
                 onBlur={e => { e.target.style.border = '1px solid rgba(0,255,100,0.2)'; e.target.style.boxShadow = 'none'; }}
                 autoComplete="username"
                 spellCheck={false}
-              />
-            </div>
-
-            {/* Access Code */}
-            <div>
-              <label className="block font-mono text-xs tracking-widest mb-2 uppercase"
-                style={{ color: '#00cc66' }}>
-                ▸ PASSWORD
-              </label>
-              <input
-                type="password"
-                value={teamCode}
-                onChange={(e) => setTeamCode(e.target.value)}
-                placeholder="Enter password..."
-                className="w-full font-mono text-sm px-3 py-2.5 rounded-sm tracking-widest transition-all"
-                style={{
-                  background: 'rgba(0,255,100,0.04)',
-                  border: '1px solid rgba(0,255,100,0.2)',
-                  color: '#00ff88',
-                  outline: 'none',
-                }}
-                onFocus={e => { e.target.style.border = '1px solid rgba(0,255,136,0.6)'; e.target.style.boxShadow = '0 0 12px rgba(0,255,100,0.15)'; }}
-                onBlur={e => { e.target.style.border = '1px solid rgba(0,255,100,0.2)'; e.target.style.boxShadow = 'none'; }}
-                autoComplete="current-password"
               />
             </div>
 

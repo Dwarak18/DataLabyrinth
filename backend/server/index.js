@@ -282,23 +282,19 @@ const validateSession = async (req, res, next) => {
    AUTH
 ════════════════════════════════════════════════════════════════ */
 
-/* POST /api/level2/auth — team login (team_id/name + password/code) */
+/* POST /api/level2/auth — team login (team_id/name only — no password required) */
 app.post('/api/level2/auth', async (req, res) => {
-  // Accept both old (name+code) and new (team_id+password) formats
-  const rawPassword = (req.body.password || req.body.code || '').trim();
-  const rawId       = (req.body.team_id  || req.body.name  || '').trim();
-  if (!rawPassword) return res.status(400).json({ error: 'Password required.' });
+  const rawId = (req.body.team_id || req.body.name || '').trim();
+  if (!rawId) return res.status(400).json({ error: 'Team ID required.' });
   try {
-    // Match by team_key (Excel team_id) OR by team name — case-insensitive; password case-insensitive
-    const query = rawId
-      ? `SELECT id, name FROM teams
-         WHERE UPPER(password)=UPPER($1)
-           AND (LOWER(COALESCE(team_key,''))=LOWER($2) OR LOWER(name)=LOWER($2))
-         LIMIT 1`
-      : `SELECT id, name FROM teams WHERE UPPER(password)=UPPER($1) LIMIT 1`;
-    const params = rawId ? [rawPassword, rawId] : [rawPassword];
-    const { rows: teams } = await q(query, params);
-    if (!teams.length) return res.status(401).json({ error: 'Invalid username or password.' });
+    // Match by team_key (Excel team_id) OR by team name — case-insensitive
+    const { rows: teams } = await q(
+      `SELECT id, name FROM teams
+       WHERE LOWER(COALESCE(team_key,''))=LOWER($1) OR LOWER(name)=LOWER($1)
+       LIMIT 1`,
+      [rawId]
+    );
+    if (!teams.length) return res.status(401).json({ error: 'Team not found. Check your Team ID.' });
     const { id: team_id, name: team_name } = teams[0];
 
     const { rows: sessions } = await q(
@@ -513,19 +509,31 @@ app.post('/api/admin/teams/import', requireAdmin, async (req, res) => {
     const teamName = String(t.team_name || '').trim();
     const password = String(t.password  || '').trim();
 
-    if (!teamName || !password) { skipped++; continue; }
+    if (!teamName) { skipped++; continue; }
 
     try {
-      const r = await q(
-        `INSERT INTO teams(id, team_key, name, password)
-         VALUES($1, NULLIF($2,''), $3, $4)
-         ON CONFLICT (password) DO UPDATE
-           SET team_key = EXCLUDED.team_key,
-               name     = EXCLUDED.name`,
-        [uuidv4(), teamKey, teamName, password]
+      // Try to find existing team by name (case-insensitive)
+      const { rows: existing } = await q(
+        `SELECT id FROM teams WHERE LOWER(name)=LOWER($1) LIMIT 1`,
+        [teamName]
       );
-      if (r.rowCount > 0) inserted++;
-      else updated++;
+      if (existing.length > 0) {
+        // Update team_key for existing team
+        await q(
+          `UPDATE teams SET team_key=NULLIF($1,'') WHERE id=$2`,
+          [teamKey, existing[0].id]
+        );
+        updated++;
+      } else {
+        // Insert new team — auto-generate password if not provided
+        const pass = password || uuidv4();
+        await q(
+          `INSERT INTO teams(id, team_key, name, password)
+           VALUES($1, NULLIF($2,''), $3, $4)`,
+          [uuidv4(), teamKey, teamName, pass]
+        );
+        inserted++;
+      }
     } catch (err) {
       skipped++;
       errors.push(`${teamName}: ${err.message}`);

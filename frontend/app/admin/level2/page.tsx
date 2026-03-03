@@ -138,7 +138,7 @@ export default function AdminPanel() {
   const [newTeamCode, setNewTeamCode] = useState('');
 
   // Excel import
-  const [importRows, setImportRows] = useState<{ team_id: string; team_name: string; password: string }[]>([]);
+  const [importRows, setImportRows] = useState<{ team_id: string; team_name: string; password?: string }[]>([]);
   const [importStatus, setImportStatus] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,7 +161,7 @@ export default function AdminPanel() {
             team_name: norm['team_name'] || norm['name']     || '',
             password:  norm['password']  || norm['code']     || norm['access_code'] || '',
           };
-        }).filter(r => r.team_name && r.password);
+        }).filter(r => r.team_name);
         setImportRows(rows);
         setImportStatus(`✅ Parsed ${rows.length} row(s) from "${file.name}". Review below and confirm.`);
       } catch {
@@ -459,8 +459,8 @@ export default function AdminPanel() {
                 📤 Import Teams from Excel
               </p>
               <p style={{ color: C.dim, fontSize: 10, margin: '0 0 12px' }}>
-                Excel file must contain columns: <span style={{ color: C.cyan }}>team_id</span>, <span style={{ color: C.cyan }}>team_name</span>, <span style={{ color: C.cyan }}>password</span>
-                {' '}(first row = headers). Teams already in DB will be updated.
+                Excel columns: <span style={{ color: C.cyan }}>team_id</span> (optional), <span style={{ color: C.cyan }}>team_name</span> <span style={{ color: C.red }}>*required</span>, <span style={{ color: C.cyan }}>password</span> (optional — auto-generated if blank)
+                {' '}— first row = headers. Existing teams matched by name will be updated.
               </p>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <input
@@ -514,7 +514,7 @@ export default function AdminPanel() {
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr style={{ background: '#050a07', position: 'sticky', top: 0 }}>
-                        {['#', 'Team ID', 'Team Name', 'Password'].map(h => (
+                        {['#', 'Team ID', 'Team Name', 'Password (opt.)'].map(h => (
                           <th key={h} style={{ padding: '6px 10px', textAlign: 'left', fontSize: 9, color: C.dim, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{h}</th>
                         ))}
                       </tr>
@@ -525,7 +525,7 @@ export default function AdminPanel() {
                           <td style={{ padding: '6px 10px', color: C.muted, fontSize: 10 }}>{i + 1}</td>
                           <td style={{ padding: '6px 10px', color: C.cyan, fontSize: 11 }}>{r.team_id || '—'}</td>
                           <td style={{ padding: '6px 10px', color: C.text, fontSize: 11 }}>{r.team_name}</td>
-                          <td style={{ padding: '6px 10px' }}><Badge v={r.password} col={C.green} /></td>
+                          <td style={{ padding: '6px 10px' }}>{r.password ? <Badge v={r.password} col={C.green} /> : <span style={{ color: C.muted, fontSize: 10 }}>(auto)</span>}</td>
                         </tr>
                       ))}
                     </tbody>
