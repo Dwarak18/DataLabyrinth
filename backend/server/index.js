@@ -517,9 +517,9 @@ app.post('/api/admin/teams/import', requireAdmin, async (req, res) => {
 
     try {
       const r = await q(
-        `INSERT INTO teams(id, team_key, name, code)
+        `INSERT INTO teams(id, team_key, name, password)
          VALUES($1, NULLIF($2,''), $3, $4)
-         ON CONFLICT (code) DO UPDATE
+         ON CONFLICT (password) DO UPDATE
            SET team_key = EXCLUDED.team_key,
                name     = EXCLUDED.name`,
         [uuidv4(), teamKey, teamName, password]
