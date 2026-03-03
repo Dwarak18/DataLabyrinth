@@ -16,8 +16,17 @@ const pool = new Pool({
   ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('railway')
     ? { rejectUnauthorized: false }
     : false,
+  connectionTimeoutMillis: 5000,   // fail fast if DB is unreachable
+  idleTimeoutMillis:       30000,
+  max:                     10,
 });
-const q = (text, params) => pool.query(text, params);
+
+// Wrap every query with a 10s statement timeout so no query can hang forever
+const q = (text, params) => pool.query({ text, values: params, query_timeout: 10000 });
+
+// Admin credentials — change via ADMIN_USERNAME + ADMIN_SECRET Railway env vars
+const ADMIN_USER = process.env.ADMIN_USERNAME || 'heisenberg';
+const ADMIN_PASS = process.env.ADMIN_SECRET   || 'heisenberg';
 
 /* ── Middleware ────────────────────────────────────────────────── */
 app.use(cors({
@@ -38,14 +47,13 @@ app.use(express.json({ limit: '10mb' }));
 const requireAdmin = async (req, res, next) => {
   const token = req.headers['x-admin-token'];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  // Layer 1: hardcoded default (no env / DB needed)
-  const defaultPass = process.env.ADMIN_SECRET || 'heisenberg';
-  if (token === defaultPass) return next();
-  // Layer 2: DB check
+  // Layer 1: in-process check — no DB, instant
+  if (token === ADMIN_PASS) return next();
+  // Layer 2: DB check for extra admin accounts
   try {
     const { rows } = await q('SELECT 1 FROM admins WHERE password=$1 LIMIT 1', [token]);
     if (rows.length > 0) return next();
-  } catch { /* DB not ready, fall through */ }
+  } catch { /* DB unavailable — only default token works */ }
   return res.status(401).json({ error: 'Unauthorized' });
 };
 
@@ -269,7 +277,8 @@ async function seedDefaults() {
 
   console.log('[BLACKSITE] DB startup complete.');
 }
-seedDefaults();
+// Defer seed by 2s — lets the server start accepting requests immediately
+setTimeout(() => seedDefaults(), 2000);
 
 const validateSession = async (req, res, next) => {
   const { team_id } = req.body;
@@ -755,20 +764,17 @@ app.post('/api/level2/query', async (req, res) => {
   }
 });
 
-/* ── Admin Login (hardcoded default + env override + DB) ─────────── */
+/* ── Admin Login ─────────────────────────────────────────────────── */
 app.post('/api/admin/login', async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password)
     return res.status(400).json({ error: 'username and password required' });
 
-  // Layer 1: hardcoded default creds — always works, no DB or env needed.
-  // Override by setting ADMIN_USERNAME + ADMIN_SECRET env vars in Railway.
-  const defaultUser = process.env.ADMIN_USERNAME || 'heisenberg';
-  const defaultPass = process.env.ADMIN_SECRET   || 'heisenberg';
-  if (username === defaultUser && password === defaultPass)
+  // Layer 1: in-process check — zero DB latency, always works
+  if (username === ADMIN_USER && password === ADMIN_PASS)
     return res.json({ ok: true, token: password });
 
-  // Layer 2: DB check for any other admin accounts created via the panel
+  // Layer 2: DB check for additional admin accounts
   try {
     const { rows } = await q(
       'SELECT id FROM admins WHERE username=$1 AND password=$2 LIMIT 1',
@@ -778,7 +784,8 @@ app.post('/api/admin/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     res.json({ ok: true, token: password });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    // DB unavailable — only default creds work in this state
+    return res.status(401).json({ error: 'Invalid credentials (DB unavailable)' });
   }
 });
 
@@ -822,10 +829,18 @@ app.get('/api/level2/debrief/:team_id', async (req, res) => {
 
 /* ── Health ────────────────────────────────────────────────────── */
 app.get('/health', async (_,res) => {
+  // Respond immediately so the frontend doesn't hang waiting for DB
+  const ts = new Date().toISOString();
   try {
-    await q('SELECT 1');
-    res.json({ status:'ok', db:'connected', ts:new Date().toISOString() });
-  } catch { res.status(503).json({ status:'error', db:'unreachable' }); }
+    await Promise.race([
+      q('SELECT 1'),
+      new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
+    ]);
+    res.json({ status:'ok', db:'connected', ts });
+  } catch {
+    // Return 200 so the frontend loads — just mark DB status
+    res.json({ status:'ok', db:'unreachable', ts });
+  }
 });
 
 /* ── Diagnostics — lists which tables exist & row counts ────────── */
