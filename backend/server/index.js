@@ -66,7 +66,7 @@ async function seedDefaults() {
     await q(`CREATE TABLE IF NOT EXISTS teams (
       id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
       name       TEXT        NOT NULL,
-      code       TEXT        NOT NULL UNIQUE,
+      password   TEXT        NOT NULL UNIQUE,
       team_key   TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
@@ -196,7 +196,7 @@ async function seedDefaults() {
       'THETA-8','IOTA-9','KAPPA-10','LAMBDA-11','MU-12','NU-13','XI-14',
       'OMICRON-15','PI-16','RHO-17','SIGMA-18','TAU-19','UPSILON-20','PHI-21','GOVINDA'
     ];
-    await q(`DELETE FROM teams WHERE code = ANY($1)`, [oldCodes]).catch(()=>{});
+    await q(`DELETE FROM teams WHERE password = ANY($1)`, [oldCodes]).catch(()=>{});
 
     // ── Real competition teams (from TEAMS-DATA.xlsx) ─────────────────
     // Login: Team Name + Password (access code)
@@ -247,7 +247,7 @@ async function seedDefaults() {
       ['TECH-TITANS',         '809848'],
     ];
     for (const [name, code] of teams) {
-      await q(`INSERT INTO teams (name,code) VALUES ($1,$2) ON CONFLICT (code) DO NOTHING`, [name, code]);
+      await q(`INSERT INTO teams (name,password) VALUES ($1,$2) ON CONFLICT (password) DO NOTHING`, [name, code]);
     }
 
     console.log('[BLACKSITE] DB schema ensured + defaults seeded.');
@@ -292,10 +292,10 @@ app.post('/api/level2/auth', async (req, res) => {
     // Match by team_key (Excel team_id) OR by team name — case-insensitive; password case-insensitive
     const query = rawId
       ? `SELECT id, name FROM teams
-         WHERE UPPER(code)=UPPER($1)
+         WHERE UPPER(password)=UPPER($1)
            AND (LOWER(COALESCE(team_key,''))=LOWER($2) OR LOWER(name)=LOWER($2))
          LIMIT 1`
-      : `SELECT id, name FROM teams WHERE UPPER(code)=UPPER($1) LIMIT 1`;
+      : `SELECT id, name FROM teams WHERE UPPER(password)=UPPER($1) LIMIT 1`;
     const params = rawId ? [rawPassword, rawId] : [rawPassword];
     const { rows: teams } = await q(query, params);
     if (!teams.length) return res.status(401).json({ error: 'Invalid username or password.' });
@@ -470,7 +470,7 @@ app.post('/api/level2/bonus/release', requireAdmin, async (req, res) => {
 app.get('/api/admin/teams', requireAdmin, async (req, res) => {
   try {
     const { rows } = await q(
-      `SELECT t.id, t.name, t.code, t.team_key,
+      `SELECT t.id, t.name, t.password, t.team_key,
               s.is_active, s.ends_at, s.started_at,
               COALESCE(sc.total_points,0) as total_points,
               COALESCE(sc.tasks_completed,0) as tasks_completed
@@ -489,7 +489,7 @@ app.post('/api/admin/teams', requireAdmin, async (req, res) => {
   if (!name||!code) return res.status(400).json({ error:'name and code required' });
   try {
     const { rows } = await q(
-      `INSERT INTO teams(id,name,code) VALUES($1,$2,UPPER($3)) RETURNING *`,
+      `INSERT INTO teams(id,name,password) VALUES($1,$2,UPPER($3)) RETURNING *`,
       [uuidv4(),name,code]
     );
     res.json(rows[0]);
@@ -596,16 +596,16 @@ app.post('/api/admin/reseed-teams', requireAdmin, async (req, res) => {
     ['TECH-TITANS',         '809848'],
   ];
   try {
-    await q(`DELETE FROM teams WHERE code = ANY($1)`, [oldCodes]).catch(()=>{});
+    await q(`DELETE FROM teams WHERE password = ANY($1)`, [oldCodes]).catch(()=>{});
     let inserted = 0;
     for (const [name, code] of teams) {
       const r = await q(
-        `INSERT INTO teams (name,code) VALUES ($1,$2) ON CONFLICT (code) DO NOTHING`,
+        `INSERT INTO teams (name,password) VALUES ($1,$2) ON CONFLICT (password) DO NOTHING`,
         [name, code]
       );
       inserted += r.rowCount;
     }
-    const { rows } = await q(`SELECT name, code FROM teams ORDER BY name`);
+    const { rows } = await q(`SELECT name, password FROM teams ORDER BY name`);
     res.json({ ok: true, inserted, total: rows.length, teams: rows });
   } catch (err) {
     console.error('/reseed-teams error:', err);
@@ -669,16 +669,16 @@ app.get('/api/admin/submissions', requireAdmin, async (req, res) => {
 app.get('/api/admin/export.csv', requireAdmin, async (req, res) => {
   try {
     const { rows } = await q(
-      `SELECT t.name as team_name,t.code,
+      `SELECT t.name as team_name,t.password,
               sc.total_points,sc.tasks_completed,
               sc.section_a_pts,sc.section_b_pts,sc.section_c_pts,sc.bonus_pts,
               sc.last_submit_at
        FROM l2_scores sc JOIN teams t ON t.id=sc.team_id
        ORDER BY sc.total_points DESC`
     );
-    const header='Team,Code,Total,Tasks,SectionA,SectionB,SectionC,Bonus,LastSubmit\n';
+    const header='Team,Password,Total,Tasks,SectionA,SectionB,SectionC,Bonus,LastSubmit\n';
     const csv=header+rows.map(r=>
-      `"${r.team_name}",${r.code},${r.total_points},${r.tasks_completed},`+
+      `"${r.team_name}",${r.password},${r.total_points},${r.tasks_completed},`+
       `${r.section_a_pts},${r.section_b_pts},${r.section_c_pts},${r.bonus_pts},`+
       `"${r.last_submit_at||''}"`
     ).join('\n');
@@ -748,7 +748,7 @@ app.get('/api/admin/credentials', requireAdmin, async (req, res) => {
   try {
     const [adminsRes, teamsRes] = await Promise.all([
       q('SELECT username, password FROM admins ORDER BY created_at'),
-      q('SELECT name, code FROM teams ORDER BY name'),
+      q('SELECT name, password FROM teams ORDER BY name'),
     ]);
     res.json({ admins: adminsRes.rows, teams: teamsRes.rows });
   } catch (e) {
@@ -803,7 +803,7 @@ app.get('/diag', async (_,res) => {
   }
   // Also test a simple team auth query
   try {
-    const r = await q(`SELECT id,name FROM teams WHERE UPPER(code)=$1 LIMIT 1`,['GOVINDA']);
+    const r = await q(`SELECT id,name FROM teams WHERE UPPER(password)=$1 LIMIT 1`,['GOVINDA']);
     results['_auth_query'] = r.rows.length ? `ok — found: ${r.rows[0].name}` : 'no row found for GOVINDA';
   } catch(e) { results['_auth_query'] = `ERROR: ${e.message}`; }
   res.json(results);

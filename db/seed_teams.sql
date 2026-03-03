@@ -4,7 +4,7 @@
 -- ============================================================
 
 -- Remove old placeholder teams
-DELETE FROM teams WHERE code IN (
+DELETE FROM teams WHERE password IN (
   'ALPHA-1','BETA-2','GAMMA-3','DELTA-4','EPSILON-5','ZETA-6','ETA-7',
   'THETA-8','IOTA-9','KAPPA-10','LAMBDA-11','MU-12','NU-13','XI-14',
   'OMICRON-15','PI-16','RHO-17','SIGMA-18','TAU-19','UPSILON-20','PHI-21','GOVINDA'
@@ -16,7 +16,7 @@ VALUES ('heisenberg', 'heisenberg')
 ON CONFLICT (username) DO NOTHING;
 
 -- Insert real competition teams (name = team name, code = password for login)
-INSERT INTO teams (name, code) VALUES
+INSERT INTO teams (name, password) VALUES
   ('CIPHER-SYNDICATE',    'Cipher26'),
   ('SANTHOSH.V',          'AI&DS 007'),
   ('RUNTIME_RUBBLES',     'Saha@100807'),
@@ -61,7 +61,7 @@ INSERT INTO teams (name, code) VALUES
   ('ELITE-CODERS',        'elite@2026'),
   ('ZYNTRIX',             'zyn@1234'),
   ('TECH-TITANS',         '809848')
-ON CONFLICT (code) DO NOTHING;
+ON CONFLICT (password) DO NOTHING;
 
 -- Verify
-SELECT name, code FROM teams ORDER BY name;
+SELECT name, password FROM teams ORDER BY name;

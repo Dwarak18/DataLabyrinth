@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS admins (
 CREATE TABLE IF NOT EXISTS teams (
   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name       TEXT        NOT NULL,
-  code       TEXT        NOT NULL UNIQUE,   -- login code, always UPPERCASE
+  password   TEXT        NOT NULL UNIQUE,   -- login password, always UPPERCASE
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -90,4 +90,9 @@ INSERT INTO l2_bonus_state (id) VALUES (1) ON CONFLICT DO NOTHING;
 CREATE INDEX IF NOT EXISTS idx_l2_submissions_team ON l2_submissions(team_id);
 CREATE INDEX IF NOT EXISTS idx_l2_submissions_task ON l2_submissions(task_id);
 CREATE INDEX IF NOT EXISTS idx_l2_scores_points    ON l2_scores(total_points DESC);
+
+-- ── Admin seed ──────────────────────────────────────────────────────
+INSERT INTO admins (username, password)
+VALUES ('heisenberg', 'heisenberg')
+ON CONFLICT (username) DO NOTHING;
 
