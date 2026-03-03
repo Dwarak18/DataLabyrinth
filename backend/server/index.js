@@ -50,11 +50,11 @@ const requireAdmin = async (req, res, next) => {
 
 /* ── Startup: create all tables + seed defaults ───────────────────── */
 async function seedDefaults() {
+
+  // ── PHASE 1: Schema creation ────────────────────────────────────────
   try {
-    // Enable UUID extension (needed on some PG versions)
     await q(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`).catch(()=>{});
 
-    // ── admins ──────────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS admins (
       id         SERIAL      PRIMARY KEY,
       username   TEXT        NOT NULL UNIQUE,
@@ -62,7 +62,6 @@ async function seedDefaults() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
 
-    // ── teams ───────────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS teams (
       id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
       name       TEXT        NOT NULL,
@@ -70,10 +69,8 @@ async function seedDefaults() {
       team_key   TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
-    // Add team_key column if it doesn't exist (for existing deployments)
     await q(`ALTER TABLE teams ADD COLUMN IF NOT EXISTS team_key TEXT`).catch(()=>{});
 
-    // ── sessions ────────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS l2_sessions (
       id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
       team_id    UUID        NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
@@ -83,7 +80,6 @@ async function seedDefaults() {
       UNIQUE (team_id)
     )`);
 
-    // ── submissions ─────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS l2_submissions (
       id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
       team_id       UUID        NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
@@ -97,7 +93,6 @@ async function seedDefaults() {
       submitted_at  TIMESTAMPTZ DEFAULT NOW()
     )`);
 
-    // ── scores ──────────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS l2_scores (
       team_id         UUID    PRIMARY KEY REFERENCES teams(id) ON DELETE CASCADE,
       total_points    INTEGER DEFAULT 0,
@@ -109,7 +104,6 @@ async function seedDefaults() {
       last_submit_at  TIMESTAMPTZ
     )`);
 
-    // ── ai logs ─────────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS l2_ai_logs (
       id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
       team_id       UUID        NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
@@ -121,7 +115,6 @@ async function seedDefaults() {
       logged_at     TIMESTAMPTZ DEFAULT NOW()
     )`);
 
-    // ── hints ────────────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS l2_hints_used (
       team_id   UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
       task_id   TEXT NOT NULL,
@@ -129,7 +122,6 @@ async function seedDefaults() {
       PRIMARY KEY (team_id, task_id)
     )`);
 
-    // ── bonus state ──────────────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS l2_bonus_state (
       id          INTEGER PRIMARY KEY DEFAULT 1,
       released_at TIMESTAMPTZ,
@@ -138,7 +130,6 @@ async function seedDefaults() {
     )`);
     await q(`INSERT INTO l2_bonus_state (id) VALUES (1) ON CONFLICT DO NOTHING`);
 
-    // ── game dataset tables ──────────────────────────────────────────
     await q(`CREATE TABLE IF NOT EXISTS students (
       id   INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
@@ -160,7 +151,32 @@ async function seedDefaults() {
       total      INTEGER NOT NULL
     )`);
 
-    // seed game data only if empty
+    await q(`CREATE INDEX IF NOT EXISTS idx_l2_submissions_team ON l2_submissions(team_id)`).catch(()=>{});
+    await q(`CREATE INDEX IF NOT EXISTS idx_l2_submissions_task ON l2_submissions(task_id)`).catch(()=>{});
+    await q(`CREATE INDEX IF NOT EXISTS idx_l2_scores_points    ON l2_scores(total_points DESC)`).catch(()=>{});
+
+    console.log('[BLACKSITE] Schema ensured.');
+  } catch (e) {
+    console.error('[BLACKSITE] Schema error:', e.message);
+  }
+
+  // ── PHASE 2: Admin seeding (independent — always runs) ──────────────
+  try {
+    // Use ADMIN_SECRET env var if provided, else default heisenberg/heisenberg
+    const adminUser = process.env.ADMIN_USERNAME || 'heisenberg';
+    const adminPass = process.env.ADMIN_SECRET   || 'heisenberg';
+    await q(
+      `INSERT INTO admins (username, password) VALUES ($1, $2)
+       ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password`,
+      [adminUser, adminPass]
+    );
+    console.log(`[BLACKSITE] Admin credentials ensured (user: ${adminUser}).`);
+  } catch (e) {
+    console.error('[BLACKSITE] Admin seed error:', e.message);
+  }
+
+  // ── PHASE 3: Game dataset seeding ───────────────────────────────────
+  try {
     const { rows: sc } = await q(`SELECT COUNT(*) FROM students`);
     if (parseInt(sc[0].count) === 0) {
       const students = require('./mockData/students.json');
@@ -180,17 +196,12 @@ async function seedDefaults() {
       }
       console.log('[BLACKSITE] Game dataset seeded.');
     }
+  } catch (e) {
+    console.error('[BLACKSITE] Game data seed error:', e.message);
+  }
 
-    // ── indexes ──────────────────────────────────────────────────────
-    await q(`CREATE INDEX IF NOT EXISTS idx_l2_submissions_team ON l2_submissions(team_id)`).catch(()=>{});
-    await q(`CREATE INDEX IF NOT EXISTS idx_l2_submissions_task ON l2_submissions(task_id)`).catch(()=>{});
-    await q(`CREATE INDEX IF NOT EXISTS idx_l2_scores_points    ON l2_scores(total_points DESC)`).catch(()=>{});
-
-    // ── default credentials ──────────────────────────────────────────
-    await q(`INSERT INTO admins (username, password) VALUES ('heisenberg','heisenberg')
-             ON CONFLICT (username) DO NOTHING`);
-
-    // ── Remove old placeholder teams ─────────────────────────────────
+  // ── PHASE 4: Competition teams seeding ──────────────────────────────
+  try {
     const oldCodes = [
       'ALPHA-1','BETA-2','GAMMA-3','DELTA-4','EPSILON-5','ZETA-6','ETA-7',
       'THETA-8','IOTA-9','KAPPA-10','LAMBDA-11','MU-12','NU-13','XI-14',
@@ -198,8 +209,6 @@ async function seedDefaults() {
     ];
     await q(`DELETE FROM teams WHERE password = ANY($1)`, [oldCodes]).catch(()=>{});
 
-    // ── Real competition teams (from TEAMS-DATA.xlsx) ─────────────────
-    // Login: Team Name + Password (access code)
     const teams = [
       ['CIPHER-SYNDICATE',    'Cipher26'],
       ['SANTHOSH.V',          'AI&DS 007'],
@@ -247,13 +256,17 @@ async function seedDefaults() {
       ['TECH-TITANS',         '809848'],
     ];
     for (const [name, code] of teams) {
-      await q(`INSERT INTO teams (name,password) VALUES ($1,$2) ON CONFLICT (password) DO NOTHING`, [name, code]);
+      await q(
+        `INSERT INTO teams (name,password) VALUES ($1,$2) ON CONFLICT (password) DO NOTHING`,
+        [name, code]
+      );
     }
-
-    console.log('[BLACKSITE] DB schema ensured + defaults seeded.');
+    console.log('[BLACKSITE] Competition teams seeded.');
   } catch (e) {
-    console.error('[BLACKSITE] seedDefaults ERROR:', e.message);
+    console.error('[BLACKSITE] Teams seed error:', e.message);
   }
+
+  console.log('[BLACKSITE] DB startup complete.');
 }
 seedDefaults();
 
@@ -466,7 +479,7 @@ app.post('/api/level2/bonus/release', requireAdmin, async (req, res) => {
 app.get('/api/admin/teams', requireAdmin, async (req, res) => {
   try {
     const { rows } = await q(
-      `SELECT t.id, t.name, t.password, t.team_key,
+      `SELECT t.id, t.name, t.password AS code, t.team_key,
               s.is_active, s.ends_at, s.started_at,
               COALESCE(sc.total_points,0) as total_points,
               COALESCE(sc.tasks_completed,0) as tasks_completed
@@ -518,11 +531,18 @@ app.post('/api/admin/teams/import', requireAdmin, async (req, res) => {
         [teamName]
       );
       if (existing.length > 0) {
-        // Update team_key for existing team
-        await q(
-          `UPDATE teams SET team_key=NULLIF($1,'') WHERE id=$2`,
-          [teamKey, existing[0].id]
-        );
+        // Update team_key (and password if provided) for existing team
+        if (password) {
+          await q(
+            `UPDATE teams SET team_key=NULLIF($1,''), password=$3 WHERE id=$2`,
+            [teamKey, existing[0].id, password]
+          );
+        } else {
+          await q(
+            `UPDATE teams SET team_key=NULLIF($1,'') WHERE id=$2`,
+            [teamKey, existing[0].id]
+          );
+        }
         updated++;
       } else {
         // Insert new team — auto-generate password if not provided
@@ -732,11 +752,16 @@ app.post('/api/level2/query', async (req, res) => {
   }
 });
 
-/* ── Admin Login (DB-backed) ────────────────────────────────────── */
+/* ── Admin Login (DB-backed + ADMIN_SECRET fallback) ─────────────── */
 app.post('/api/admin/login', async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password)
     return res.status(400).json({ error: 'username and password required' });
+
+  // Fast path: ADMIN_SECRET env var (any username accepted with the secret)
+  if (process.env.ADMIN_SECRET && password === process.env.ADMIN_SECRET)
+    return res.json({ ok: true, token: password });
+
   try {
     const { rows } = await q(
       'SELECT id FROM admins WHERE username=$1 AND password=$2 LIMIT 1',
@@ -756,7 +781,7 @@ app.get('/api/admin/credentials', requireAdmin, async (req, res) => {
   try {
     const [adminsRes, teamsRes] = await Promise.all([
       q('SELECT username, password FROM admins ORDER BY created_at'),
-      q('SELECT name, password FROM teams ORDER BY name'),
+      q('SELECT name, COALESCE(team_key, password) AS code, team_key, password FROM teams ORDER BY name'),
     ]);
     res.json({ admins: adminsRes.rows, teams: teamsRes.rows });
   } catch (e) {

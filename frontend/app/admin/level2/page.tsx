@@ -21,7 +21,7 @@ interface Submission {
   sql_query: string; is_correct: boolean; points_earned: number;
   attempt_count: number; submitted_at: string; hint_used?: boolean;
 }
-interface Credentials { admins: { username: string; password: string }[]; teams: { name: string; code: string }[]; }
+interface Credentials { admins: { username: string; password: string }[]; teams: { name: string; code: string; team_key?: string; password?: string }[]; }
 interface HealthData { status: string; db: string; ts: string; }
 
 /* ─── Colour palette ─────────────────────────────────────────── */
@@ -312,10 +312,18 @@ export default function AdminPanel() {
           <button onClick={() => loadAll()} disabled={loading} style={actionBtn(C.cyan)}>
             {loading ? '…' : '↺ REFRESH'}
           </button>
-          <a href={`${API_URL}/api/admin/export.csv`} target="_blank" rel="noreferrer"
-            style={{ ...actionBtn(C.amber), textDecoration: 'none' }}>
+          <button onClick={async () => {
+            try {
+              const r = await fetch(`${API_URL}/api/admin/export.csv`, { headers: hdr() });
+              if (!r.ok) { flash('Export failed', 'err'); return; }
+              const blob = await r.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url; a.download = 'level2-scores.csv'; a.click();
+              URL.revokeObjectURL(url);
+            } catch { flash('Export failed', 'err'); }
+          }} style={actionBtn(C.amber)}>
             ↓ CSV
-          </a>
+          </button>
         </div>
       </div>
 
@@ -725,10 +733,18 @@ export default function AdminPanel() {
               }} style={{ ...actionBtn(C.red), width: '100%', padding: '8px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
                 🛑 KILL ALL SESSIONS ({activeTeams})
               </button>
-              <a href={`${API_URL}/api/admin/export.csv`} target="_blank" rel="noreferrer"
-                style={{ ...actionBtn(C.green), display: 'block', textAlign: 'center', padding: '8px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', textDecoration: 'none' }}>
+              <button onClick={async () => {
+                try {
+                  const r = await fetch(`${API_URL}/api/admin/export.csv`, { headers: hdr() });
+                  if (!r.ok) { flash('Export failed', 'err'); return; }
+                  const blob = await r.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a'); a.href = url; a.download = 'level2-scores.csv'; a.click();
+                  URL.revokeObjectURL(url);
+                } catch { flash('Export failed', 'err'); }
+              }} style={{ ...actionBtn(C.green), width: '100%', padding: '8px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 ↓ Export Scores CSV
-              </a>
+              </button>
             </div>
           </div>
         )}
@@ -763,25 +779,34 @@ export default function AdminPanel() {
             {/* Team codes */}
             <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
               <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: C.amber, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase' }}>🔑 Team Login Codes ({creds?.teams.length ?? 0})</span>
+                <span style={{ color: C.amber, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase' }}>🔑 Team Login IDs ({creds?.teams.length ?? 0})</span>
                 <button onClick={loadCreds} style={{ ...actionBtn(C.dim), fontSize: 9 }}>REFRESH</button>
               </div>
-              <div style={{ maxHeight: 500, overflowY: 'auto' }}>
+              <p style={{ padding: '6px 14px 4px', color: C.dim, fontSize: 10 }}>
+                Teams log in with their <span style={{ color: C.cyan }}>Team ID</span> (Excel team_key if set, otherwise team name).
+              </p>
+              <div style={{ maxHeight: 480, overflowY: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#050a07', position: 'sticky', top: 0 }}>
                       <th style={{ padding: '8px 14px', textAlign: 'left', fontSize: 9, color: C.dim, letterSpacing: '0.12em' }}>TEAM NAME</th>
-                      <th style={{ padding: '8px 14px', textAlign: 'left', fontSize: 9, color: C.dim, letterSpacing: '0.12em' }}>LOGIN CODE</th>
+                      <th style={{ padding: '8px 14px', textAlign: 'left', fontSize: 9, color: C.dim, letterSpacing: '0.12em' }}>LOGIN ID (team_key)</th>
+                      <th style={{ padding: '8px 14px', textAlign: 'left', fontSize: 9, color: C.dim, letterSpacing: '0.12em' }}>FALLBACK (name)</th>
                       <th style={{ padding: '8px 14px', textAlign: 'left', fontSize: 9, color: C.dim, letterSpacing: '0.12em' }}>STATUS</th>
                     </tr>
                   </thead>
                   <tbody>
                     {creds?.teams.map((t, i) => {
-                      const team = teams.find(x => x.code === t.code);
+                      const team = teams.find(x => x.name === t.name);
                       return (
                         <tr key={i} style={{ borderTop: `1px solid ${C.muted}30` }}>
                           <td style={{ padding: '8px 14px', color: C.text, fontSize: 12 }}>{t.name}</td>
-                          <td style={{ padding: '8px 14px' }}><Badge v={t.code} col={C.green} /></td>
+                          <td style={{ padding: '8px 14px' }}>
+                            {t.team_key
+                              ? <Badge v={t.team_key} col={C.cyan} />
+                              : <span style={{ color: C.muted, fontSize: 10 }}>— (not set)</span>}
+                          </td>
+                          <td style={{ padding: '8px 14px' }}><Badge v={t.name} col={C.dim} /></td>
                           <td style={{ padding: '8px 14px', fontSize: 10 }}>
                             {team?.is_active ? <span style={{ color: C.green }}>● ACTIVE</span>
                               : team?.started_at ? <span style={{ color: C.dim }}>● ENDED</span>
