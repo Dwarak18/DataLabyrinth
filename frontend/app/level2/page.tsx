@@ -175,7 +175,7 @@ export default function LobbyPage() {
                 type="text"
                 value={teamId}
                 onChange={(e) => setTeamId(e.target.value)}
-                placeholder="Enter your Team ID..."
+                placeholder="Enter your access code or Team ID..."
                 className="w-full font-mono text-sm px-3 py-2.5 rounded-sm transition-all"
                 style={{
                   background: 'rgba(0,255,100,0.04)',
@@ -189,7 +189,7 @@ export default function LobbyPage() {
                 spellCheck={false}
               />
               <p className="font-mono text-[10px] mt-1" style={{ color: '#3a6a4a' }}>
-                Use the Team ID given to you by the organizer.
+                Use the access code given to you by the organizer.
               </p>
             </div>
 

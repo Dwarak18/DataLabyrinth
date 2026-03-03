@@ -38,9 +38,10 @@ app.use(express.json({ limit: '10mb' }));
 const requireAdmin = async (req, res, next) => {
   const token = req.headers['x-admin-token'];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  // Fast path: env ADMIN_SECRET
-  if (process.env.ADMIN_SECRET && token === process.env.ADMIN_SECRET) return next();
-  // DB path: check admins table (token = admin password)
+  // Layer 1: hardcoded default (no env / DB needed)
+  const defaultPass = process.env.ADMIN_SECRET || 'heisenberg';
+  if (token === defaultPass) return next();
+  // Layer 2: DB check
   try {
     const { rows } = await q('SELECT 1 FROM admins WHERE password=$1 LIMIT 1', [token]);
     if (rows.length > 0) return next();
@@ -295,19 +296,21 @@ const validateSession = async (req, res, next) => {
    AUTH
 ════════════════════════════════════════════════════════════════ */
 
-/* POST /api/level2/auth — team login (team_id/name only — no password required) */
+/* POST /api/level2/auth — team login (team_key / team name / access code) */
 app.post('/api/level2/auth', async (req, res) => {
   const rawId = (req.body.team_id || req.body.name || '').trim();
   if (!rawId) return res.status(400).json({ error: 'Team ID required.' });
   try {
-    // Match by team_key (Excel team_id) OR by team name — case-insensitive
+    // Match by: team_key (Excel ID) OR team name OR access code (password) — all case-insensitive
     const { rows: teams } = await q(
       `SELECT id, name FROM teams
-       WHERE LOWER(COALESCE(team_key,''))=LOWER($1) OR LOWER(name)=LOWER($1)
+       WHERE LOWER(COALESCE(team_key,''))=LOWER($1)
+          OR LOWER(name)=LOWER($1)
+          OR LOWER(password)=LOWER($1)
        LIMIT 1`,
       [rawId]
     );
-    if (!teams.length) return res.status(401).json({ error: 'Team not found. Check your Team ID.' });
+    if (!teams.length) return res.status(401).json({ error: 'Team not found. Check your Team ID or access code.' });
     const { id: team_id, name: team_name } = teams[0];
 
     const { rows: sessions } = await q(
@@ -752,16 +755,20 @@ app.post('/api/level2/query', async (req, res) => {
   }
 });
 
-/* ── Admin Login (DB-backed + ADMIN_SECRET fallback) ─────────────── */
+/* ── Admin Login (hardcoded default + env override + DB) ─────────── */
 app.post('/api/admin/login', async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password)
     return res.status(400).json({ error: 'username and password required' });
 
-  // Fast path: ADMIN_SECRET env var (any username accepted with the secret)
-  if (process.env.ADMIN_SECRET && password === process.env.ADMIN_SECRET)
+  // Layer 1: hardcoded default creds — always works, no DB or env needed.
+  // Override by setting ADMIN_USERNAME + ADMIN_SECRET env vars in Railway.
+  const defaultUser = process.env.ADMIN_USERNAME || 'heisenberg';
+  const defaultPass = process.env.ADMIN_SECRET   || 'heisenberg';
+  if (username === defaultUser && password === defaultPass)
     return res.json({ ok: true, token: password });
 
+  // Layer 2: DB check for any other admin accounts created via the panel
   try {
     const { rows } = await q(
       'SELECT id FROM admins WHERE username=$1 AND password=$2 LIMIT 1',
@@ -769,7 +776,6 @@ app.post('/api/admin/login', async (req, res) => {
     );
     if (rows.length === 0)
       return res.status(401).json({ error: 'Invalid credentials' });
-    // The password itself is the API bearer token for subsequent admin calls
     res.json({ ok: true, token: password });
   } catch (e) {
     res.status(500).json({ error: e.message });
